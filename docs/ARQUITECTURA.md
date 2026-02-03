@@ -2,12 +2,14 @@
 
 ## Visión general
 
-Aplicación modular preparada para crecer. Separación clara entre datos, lógica de negocio y presentación.
+Aplicación modular preparada para crecer. **Cloudflare Pages + Functions** con D1.
+
+Separación clara entre datos, lógica de negocio y presentación.
 
 ## Capas
 
 ```
-Request → Middleware (auth) → Routes → Services → DB → D1
+Request → Pages Function (functions/api/) → Routes → Services → DB → D1
 ```
 
 - **Middleware**: Autorización (actualmente bypass, preparado para JWT/permisos)

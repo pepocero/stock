@@ -1,18 +1,11 @@
 name = "stock-recambios"
-main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# Base de datos D1 (Cloudflare SQLite)
-# Ejecutar: npx wrangler d1 create stock-db
-# Luego copiar el database_id aquí
+# Pages: directorio de salida estática (HTML, CSS, JS)
+pages_build_output_dir = "public"
+
+# Base de datos D1
 [[d1_databases]]
 binding = "DB"
 database_name = "stock-db"
-# Para local: cualquier UUID vale. Para producción: ejecutar "npx wrangler d1 create stock-db" y pegar el id aquí
-database_id = "00000000-0000-0000-0000-000000000001"
-
-# Archivos estáticos (frontend)
-# run_worker_first = false: assets primero, worker solo para rutas sin archivo (ej. /api/*)
-[assets]
-directory = "./public"
-binding = "ASSETS"
+database_id = "a4662b08-e159-473b-9e87-e92cd77d3bca"
