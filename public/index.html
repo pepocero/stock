@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Recambios - Control de inventario</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Stock Recambios</h1>
+      <p class="subtitle">Azcoyen · Jofemar</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="listado">Listado</button>
+      <button class="tab" data-view="nuevo">Nuevo recambio</button>
+      <button class="tab" data-view="campos">Campos adicionales</button>
+    </nav>
+
+    <main class="content">
+      <!-- Vista: Listado -->
+      <section id="view-listado" class="view active">
+        <div class="filters">
+          <select id="filter-fabricante">
+            <option value="">Todos los fabricantes</option>
+            <option value="Azcoyen">Azcoyen</option>
+            <option value="Jofemar">Jofemar</option>
+          </select>
+          <input type="search" id="filter-search" placeholder="Buscar por código, nombre o alias...">
+          <button id="btn-buscar">Buscar</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fabricante</th>
+                <th>Código interno</th>
+                <th>Nombre técnico</th>
+                <th>Alias</th>
+                <th class="col-cantidad">Stock</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <tr><td colspan="6" class="loading">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Vista: Nuevo recambio -->
+      <section id="view-nuevo" class="view">
+        <form id="form-nuevo" class="form-recambio">
+          <div class="form-grid">
+            <div class="field">
+              <label for="nuevo-fabricante">Fabricante *</label>
+              <select id="nuevo-fabricante" required>
+                <option value="">Seleccionar...</option>
+                <option value="Azcoyen">Azcoyen</option>
+                <option value="Jofemar">Jofemar</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="nuevo-codigo-interno">Código interno *</label>
+              <input type="text" id="nuevo-codigo-interno" required placeholder="Ej: AZC-001">
+            </div>
+            <div class="field">
+              <label for="nuevo-codigo-fabricante">Código fabricante</label>
+              <input type="text" id="nuevo-codigo-fabricante" placeholder="Código del fabricante">
+            </div>
+            <div class="field">
+              <label for="nuevo-nombre-tecnico">Nombre técnico</label>
+              <input type="text" id="nuevo-nombre-tecnico" placeholder="Nombre técnico del recambio">
+            </div>
+            <div class="field">
+              <label for="nuevo-alias">Alias</label>
+              <input type="text" id="nuevo-alias" placeholder="Nombre coloquial">
+            </div>
+            <div class="field">
+              <label for="nuevo-cantidad">Cantidad *</label>
+              <input type="number" id="nuevo-cantidad" min="0" value="0" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="nuevo-observaciones">Observaciones</label>
+            <textarea id="nuevo-observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+          </div>
+          <div id="nuevo-custom-fields" class="custom-fields-section"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar recambio</button>
+            <button type="reset" class="btn btn-secondary">Limpiar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Vista: Campos adicionales (editar nombres) -->
+      <section id="view-campos" class="view">
+        <div class="form-recambio">
+          <p class="campos-desc">Define los nombres de los campos extra que aparecerán al crear o editar recambios. El valor lo asigna el usuario en cada recambio.</p>
+          <div id="campos-lista" class="campos-lista"></div>
+          <div class="campos-nuevo">
+            <input type="text" id="nuevo-campo-nombre" placeholder="Nombre del nuevo campo (ej: Ubicación, Proveedor)">
+            <button type="button" id="btn-add-campo" class="btn btn-primary">Añadir campo</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista: Editar recambio (modal/panel) -->
+      <section id="view-editar" class="view view-panel">
+        <div class="panel-header">
+          <h2>Editar recambio</h2>
+          <button id="btn-cerrar-editar" class="btn-close">×</button>
+        </div>
+        <form id="form-editar" class="form-recambio">
+          <input type="hidden" id="editar-id">
+          <div class="form-grid">
+            <div class="field">
+              <label for="editar-fabricante">Fabricante *</label>
+              <select id="editar-fabricante" required>
+                <option value="Azcoyen">Azcoyen</option>
+                <option value="Jofemar">Jofemar</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="editar-codigo-interno">Código interno *</label>
+              <input type="text" id="editar-codigo-interno" required>
+            </div>
+            <div class="field">
+              <label for="editar-codigo-fabricante">Código fabricante</label>
+              <input type="text" id="editar-codigo-fabricante">
+            </div>
+            <div class="field">
+              <label for="editar-nombre-tecnico">Nombre técnico</label>
+              <input type="text" id="editar-nombre-tecnico">
+            </div>
+            <div class="field">
+              <label for="editar-alias">Alias</label>
+              <input type="text" id="editar-alias">
+            </div>
+            <div class="field field-stock">
+              <label for="editar-cantidad">Stock *</label>
+              <input type="number" id="editar-cantidad" min="0" required>
+              <span id="stock-bajo-badge" class="badge badge-warning hidden">Stock bajo</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="editar-observaciones">Observaciones</label>
+            <textarea id="editar-observaciones" rows="3"></textarea>
+          </div>
+          <div id="editar-custom-fields" class="custom-fields-section"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
