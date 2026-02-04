@@ -12,6 +12,10 @@ export async function onRequest(context) {
   const { request, env, params } = context;
   const url = new URL(request.url);
 
+  if (!env.DB) {
+    return error('Base de datos no configurada. Verifica el binding DB en Settings → Bindings.', 503);
+  }
+
   if (request.method === 'OPTIONS') {
     return corsPreflight();
   }
@@ -39,6 +43,7 @@ export async function onRequest(context) {
     return error('Ruta no encontrada', 404);
   } catch (err) {
     console.error(err);
-    return error('Error interno del servidor', 500);
+    const msg = err?.cause?.message || err?.message || 'Error interno';
+    return error(msg.includes('no such table') ? 'Esquema no aplicado. Ejecuta: npx wrangler d1 execute stock-db --remote --file=./schema.sql --config wrangler.local.toml' : msg, 500);
   }
 }
