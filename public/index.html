@@ -12,7 +12,7 @@
     <header class="header">
       <div class="header-main">
         <h1>Stock Recambios</h1>
-        <p class="subtitle">Azkoyen · Jofemar</p>
+        <p class="subtitle">Azkoyen · Jofemar · No Asignado</p>
       </div>
       <div class="theme-toggle" aria-label="Cambiar tema">
         <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
@@ -23,6 +23,7 @@
     <nav class="tabs">
       <button class="tab active" data-view="listado">Listado</button>
       <button class="tab" data-view="nuevo">Nuevo recambio</button>
+      <button class="tab" data-view="importar">Importar</button>
       <button class="tab" data-view="campos">Campos adicionales</button>
     </nav>
 
@@ -35,6 +36,7 @@
               <option value="">Todos los fabricantes</option>
               <option value="Azkoyen">Azkoyen</option>
               <option value="Jofemar">Jofemar</option>
+              <option value="No Asignado">No Asignado</option>
             </select>
             <select id="filter-sort" title="Ordenar por">
             <option value="codigo_interno-asc">Código (A-Z)</option>
@@ -53,11 +55,15 @@
           </div>
           <input type="search" id="filter-search" placeholder="Buscar en tiempo real por código, nombre, alias, observaciones...">
           <button id="btn-buscar">Buscar</button>
+          <button type="button" id="btn-eliminar-seleccionados" class="btn btn-danger btn-sm hidden" title="Eliminar seleccionados">Eliminar seleccionados</button>
         </div>
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
+                <th class="col-checkbox">
+                  <input type="checkbox" id="select-all-recambios" title="Seleccionar todos" aria-label="Seleccionar todos">
+                </th>
                 <th>Fabricante</th>
                 <th>Código interno</th>
                 <th>Nombre técnico</th>
@@ -67,7 +73,7 @@
               </tr>
             </thead>
             <tbody id="table-body">
-              <tr><td colspan="6" class="loading">Cargando...</td></tr>
+              <tr><td colspan="7" class="loading">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -118,6 +124,37 @@
         </form>
       </section>
 
+      <!-- Vista: Importar -->
+      <section id="view-importar" class="view">
+        <div class="form-recambio import-section">
+          <p class="import-desc">Sube un archivo CSV o Excel (.xlsx) con los recambios. Luego asigna cada columna del archivo al campo correspondiente.</p>
+          <div class="import-upload">
+            <input type="file" id="import-file" accept=".csv,.xlsx,.xls" hidden>
+            <button type="button" id="btn-select-file" class="btn btn-secondary">Seleccionar archivo CSV o Excel</button>
+            <span id="import-filename" class="import-filename"></span>
+          </div>
+          <div id="import-mapping" class="import-mapping hidden">
+            <h4>Asignar columnas</h4>
+            <p class="import-mapping-hint">Indica qué columna del archivo corresponde a cada campo. Selecciona al menos un campo. Deja en blanco para no importar esa columna.</p>
+            <div id="import-mapping-fields" class="import-mapping-fields"></div>
+            <div class="import-preview-section">
+              <h4>Vista previa (primeras 5 filas)</h4>
+              <div class="table-container import-preview-table">
+                <table class="data-table" id="import-preview-table">
+                  <thead id="import-preview-thead"></thead>
+                  <tbody id="import-preview-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="btn-importar" class="btn btn-primary">Importar recambios</button>
+              <button type="button" id="btn-import-reset" class="btn btn-secondary">Cambiar archivo</button>
+            </div>
+          </div>
+          <div id="import-result" class="import-result hidden"></div>
+        </div>
+      </section>
+
       <!-- Vista: Campos adicionales (editar nombres) -->
       <section id="view-campos" class="view">
         <div class="form-recambio">
@@ -162,6 +199,7 @@
               <select id="editar-fabricante" required>
                 <option value="Azkoyen">Azkoyen</option>
                 <option value="Jofemar">Jofemar</option>
+                <option value="No Asignado">No Asignado</option>
               </select>
             </div>
             <div class="field">
@@ -200,6 +238,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

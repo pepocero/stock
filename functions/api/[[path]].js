@@ -4,7 +4,7 @@
  * params.path = "recambios" | "recambios/1" | "custom-fields" | "custom-fields/1"
  */
 
-import { handleRecambios, handleRecambioById } from '../../src/routes/recambios.js';
+import { handleRecambios, handleRecambiosImport, handleRecambiosBatchDelete, handleRecambioById } from '../../src/routes/recambios.js';
 import { handleCustomFields, handleCustomFieldById } from '../../src/routes/custom-fields.js';
 import { error, corsPreflight } from '../../src/utils/response.js';
 
@@ -29,6 +29,12 @@ export async function onRequest(context) {
     if (parts[0] === 'recambios') {
       if (parts.length === 1) {
         return await handleRecambios(request, env, url);
+      }
+      if (parts.length === 2 && parts[1] === 'import') {
+        return await handleRecambiosImport(request, env);
+      }
+      if (parts.length === 2 && parts[1] === 'batch-delete') {
+        return await handleRecambiosBatchDelete(request, env);
       }
       if (parts.length === 2) {
         return await handleRecambioById(request, env, url, parts[1]);

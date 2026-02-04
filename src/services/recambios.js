@@ -11,7 +11,7 @@ export function validarRecambio(data, excludeId = null) {
   const errors = [];
 
   if (!data.fabricante || !FABRICANTES.includes(data.fabricante)) {
-    errors.push('fabricante: debe ser Azkoyen o Jofemar');
+    errors.push('fabricante: debe ser Azkoyen, Jofemar o No Asignado');
   }
 
   const codigo = (data.codigo_interno || '').trim();
@@ -83,4 +83,58 @@ export async function actualizarStock(db, id, cantidad) {
 
 export function esStockBajo(cantidad) {
   return cantidad < STOCK_BAJO_UMBRAL;
+}
+
+function normalizarFabricante(val) {
+  const v = (val || '').toString().trim();
+  const lower = v.toLowerCase();
+  if (lower === 'azkoyen' || lower === 'azcoyen') return 'Azkoyen';
+  if (lower === 'jofemar') return 'Jofemar';
+  return v;
+}
+
+export async function importarRecambios(db, items) {
+  const results = { created: 0, skipped: 0, errors: [] };
+  const batchId = Date.now();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const rowNum = i + 2;
+
+    let fabricante = normalizarFabricante(item.fabricante);
+    let codigo_interno = (item.codigo_interno || '').toString().trim();
+    if (!fabricante || !FABRICANTES.includes(fabricante)) fabricante = 'No Asignado';
+    if (!codigo_interno) {
+      const cf = (item.codigo_fabricante || '').toString().trim();
+      const nt = (item.nombre_tecnico || '').toString().trim();
+      codigo_interno = cf ? `${cf}-${i}` : (nt ? `${nt}-${i}` : `IMP-${batchId}-${i}`);
+    }
+
+    const data = {
+      fabricante,
+      codigo_interno,
+      codigo_fabricante: (item.codigo_fabricante || '').toString().trim() || '',
+      nombre_tecnico: (item.nombre_tecnico || '').toString().trim() || '',
+      alias: (item.alias || '').toString().trim() || '',
+      cantidad: parseInt(item.cantidad, 10) || 0,
+      observaciones: (item.observaciones || '').toString().trim() || null
+    };
+
+    const existe = await recambiosDb.existsCodigoInterno(db, data.codigo_interno);
+    if (existe) {
+      results.errors.push({ row: rowNum, msg: 'código interno ya existe' });
+      results.skipped++;
+      continue;
+    }
+
+    try {
+      await recambiosDb.createRecambio(db, data);
+      results.created++;
+    } catch (err) {
+      results.errors.push({ row: rowNum, msg: err?.message || 'Error al crear' });
+      results.skipped++;
+    }
+  }
+
+  return results;
 }

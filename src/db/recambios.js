@@ -146,6 +146,16 @@ export async function deleteRecambio(db, id) {
 }
 
 /**
+ * Elimina varios recambios por IDs
+ */
+export async function deleteRecambiosBatch(db, ids) {
+  if (!ids.length) return 0;
+  const placeholders = ids.map(() => '?').join(',');
+  const result = await db.prepare(`DELETE FROM recambios WHERE id IN (${placeholders})`).bind(...ids).run();
+  return result.meta.changes || 0;
+}
+
+/**
  * Actualiza solo la cantidad (stock)
  */
 export async function updateStock(db, id, cantidad) {

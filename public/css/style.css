@@ -269,6 +269,18 @@ body {
   padding: 2rem;
 }
 
+.col-checkbox {
+  width: 40px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.col-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
 .col-cantidad {
   width: 100px;
   text-align: right;
@@ -548,6 +560,99 @@ body {
   border-color: var(--accent);
 }
 
+/* Importar */
+.import-desc {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+}
+
+.import-upload {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.import-filename {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.import-mapping h4,
+.import-preview-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.import-mapping-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.import-mapping-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.import-mapping-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.import-mapping-row label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.import-mapping-row select {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.import-mapping-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.import-preview-section {
+  margin: 1.5rem 0;
+}
+
+.import-preview-table {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.import-result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+}
+
+.import-result details {
+  margin-top: 0.75rem;
+}
+
+.import-result summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.import-result ul {
+  margin: 0.5rem 0 0 1rem;
+  padding: 0;
+}
+
 /* Panel detalle */
 .detalle-content {
   display: flex;
@@ -566,6 +671,15 @@ body {
 
 .detalle-item:last-of-type {
   border-bottom: none;
+}
+
+.detalle-section-title {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .detalle-label {
