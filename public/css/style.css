@@ -239,8 +239,16 @@ body {
   color: var(--text-muted);
 }
 
-.data-table tbody tr:hover {
+.data-table tbody tr.recambio-row {
+  cursor: pointer;
+}
+
+.data-table tbody tr.recambio-row:hover {
   background: rgba(74, 158, 255, 0.08);
+}
+
+.data-table tbody tr.recambio-row:active {
+  background: rgba(74, 158, 255, 0.15);
 }
 
 .data-table .loading {
@@ -488,6 +496,48 @@ body {
 .campos-nuevo input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* Panel detalle */
+.detalle-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 1.5rem;
+}
+
+.detalle-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  display: block;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.detalle-item:last-of-type {
+  border-bottom: none;
+}
+
+.detalle-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.detalle-value {
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.detalle-value.empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.detalle-actions {
+  margin-top: 1rem;
 }
 
 /* =============================================================================

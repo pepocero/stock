@@ -105,6 +105,15 @@ function showEditarPanel(show = true) {
   }
 }
 
+function showDetallePanel(show = true) {
+  const panel = document.getElementById('view-detalle');
+  if (show) {
+    panel.classList.add('active');
+  } else {
+    panel.classList.remove('active');
+  }
+}
+
 // =============================================================================
 // Listado
 // =============================================================================
@@ -141,21 +150,30 @@ function renderTable(recambios, tbody) {
     const stockBajo = r.cantidad < STOCK_BAJO_UMBRAL;
     const cantidadClass = stockBajo ? 'cantidad-stock-bajo' : '';
     return `
-      <tr>
+      <tr class="recambio-row" data-id="${r.id}" tabindex="0" role="button">
         <td>${escapeHtml(r.fabricante)}</td>
         <td>${escapeHtml(r.codigo_interno)}</td>
         <td>${escapeHtml(r.nombre_tecnico)}</td>
         <td>${escapeHtml(r.alias)}</td>
         <td class="col-cantidad ${cantidadClass}">${r.cantidad}</td>
-        <td class="btn-cell">
-          <button class="btn-sm btn-edit" data-id="${r.id}">Editar</button>
-        </td>
+        <td></td>
       </tr>
     `;
   }).join('');
 
-  tbody.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', () => openEditar(parseInt(btn.dataset.id)));
+  tbody.querySelectorAll('.recambio-row').forEach(row => {
+    const id = parseInt(row.dataset.id);
+    const handler = (e) => {
+      if (e.target.closest('button')) return;
+      openDetalle(id);
+    };
+    row.addEventListener('click', handler);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openDetalle(id);
+      }
+    });
   });
 }
 
@@ -225,6 +243,69 @@ async function submitNuevo(e) {
     showFeedback(err.message, 'error');
   } finally {
     btn.disabled = false;
+  }
+}
+
+// =============================================================================
+// Detalle
+// =============================================================================
+
+async function openDetalle(id) {
+  try {
+    const recambio = await api(`/recambios/${id}`);
+    const container = document.getElementById('detalle-content');
+    const stockBajo = recambio.cantidad < STOCK_BAJO_UMBRAL;
+
+    let customHtml = '';
+    if (recambio.custom_fields && Object.keys(recambio.custom_fields).length > 0) {
+      customHtml = '<div class="detalle-item" style="margin-top:0.5rem; padding-top:1rem; border-top:1px solid var(--border)"><span class="detalle-label">Campos adicionales</span></div>';
+      for (const [key, obj] of Object.entries(recambio.custom_fields)) {
+        const label = obj?.label || key;
+        const val = obj?.value ?? '';
+        customHtml += `
+          <div class="detalle-item">
+            <span class="detalle-label">${escapeHtml(label)}</span>
+            <span class="detalle-value ${!val ? 'empty' : ''}">${escapeHtml(val) || '—'}</span>
+          </div>`;
+      }
+    }
+
+    container.innerHTML = `
+      <div class="detalle-item">
+        <span class="detalle-label">Fabricante</span>
+        <span class="detalle-value">${escapeHtml(recambio.fabricante)}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Código interno</span>
+        <span class="detalle-value">${escapeHtml(recambio.codigo_interno)}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Código fabricante</span>
+        <span class="detalle-value ${!recambio.codigo_fabricante ? 'empty' : ''}">${escapeHtml(recambio.codigo_fabricante) || '—'}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Nombre técnico</span>
+        <span class="detalle-value ${!recambio.nombre_tecnico ? 'empty' : ''}">${escapeHtml(recambio.nombre_tecnico) || '—'}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Alias</span>
+        <span class="detalle-value ${!recambio.alias ? 'empty' : ''}">${escapeHtml(recambio.alias) || '—'}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Stock</span>
+        <span class="detalle-value ${stockBajo ? 'cantidad-stock-bajo' : ''}">${recambio.cantidad}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Observaciones</span>
+        <span class="detalle-value ${!recambio.observaciones ? 'empty' : ''}">${escapeHtml(recambio.observaciones) || '—'}</span>
+      </div>
+      ${customHtml}
+    `;
+
+    document.getElementById('btn-editar-desde-detalle').dataset.id = recambio.id;
+    showDetallePanel(true);
+  } catch (err) {
+    showFeedback(err.message, 'error');
   }
 }
 
@@ -431,6 +512,17 @@ async function init() {
   });
 
   document.getElementById('btn-cerrar-editar').addEventListener('click', () => showEditarPanel(false));
+
+  document.getElementById('btn-cerrar-detalle').addEventListener('click', () => showDetallePanel(false));
+  document.getElementById('btn-cerrar-detalle-abajo').addEventListener('click', () => showDetallePanel(false));
+
+  document.getElementById('btn-editar-desde-detalle').addEventListener('click', () => {
+    const id = document.getElementById('btn-editar-desde-detalle').dataset.id;
+    if (id) {
+      showDetallePanel(false);
+      openEditar(parseInt(id));
+    }
+  });
 
   const btnCancelarEditar = document.getElementById('btn-cancelar-editar');
   if (btnCancelarEditar) {
