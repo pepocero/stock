@@ -10,8 +10,14 @@
 <body>
   <div class="app">
     <header class="header">
-      <h1>Stock Recambios</h1>
-      <p class="subtitle">Azcoyen · Jofemar</p>
+      <div class="header-main">
+        <h1>Stock Recambios</h1>
+        <p class="subtitle">Azcoyen · Jofemar</p>
+      </div>
+      <div class="theme-toggle" aria-label="Cambiar tema">
+        <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
+        <button id="btn-theme-dark" type="button" title="Modo oscuro">🌙</button>
+      </div>
     </header>
 
     <nav class="tabs">
@@ -153,6 +159,7 @@
           <div id="editar-custom-fields" class="custom-fields-section"></div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <button type="button" id="btn-cancelar-editar" class="btn btn-secondary">Cancelar</button>
           </div>
         </form>
       </section>

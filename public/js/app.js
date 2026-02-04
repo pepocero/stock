@@ -9,6 +9,59 @@ const STOCK_BAJO_UMBRAL = 5;
 let customFieldsDefinitions = [];
 
 // =============================================================================
+// Tema (oscuro / claro)
+// =============================================================================
+
+const THEME_STORAGE_KEY = 'stock_theme';
+
+function applyTheme(theme) {
+  const body = document.body;
+  body.classList.remove('theme-light', 'theme-dark');
+  body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+
+  const btnLight = document.getElementById('btn-theme-light');
+  const btnDark = document.getElementById('btn-theme-dark');
+  if (btnLight && btnDark) {
+    btnLight.classList.toggle('theme-active', theme === 'light');
+    btnDark.classList.toggle('theme-active', theme !== 'light');
+  }
+}
+
+function initTheme() {
+  let stored = null;
+  try {
+    stored = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    stored = null;
+  }
+
+  if (stored !== 'light' && stored !== 'dark') {
+    const prefersDark = window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    stored = prefersDark ? 'dark' : 'light';
+  }
+
+  applyTheme(stored);
+
+  const btnLight = document.getElementById('btn-theme-light');
+  const btnDark = document.getElementById('btn-theme-dark');
+
+  if (btnLight) {
+    btnLight.addEventListener('click', () => {
+      applyTheme('light');
+      try { localStorage.setItem(THEME_STORAGE_KEY, 'light'); } catch {}
+    });
+  }
+
+  if (btnDark) {
+    btnDark.addEventListener('click', () => {
+      applyTheme('dark');
+      try { localStorage.setItem(THEME_STORAGE_KEY, 'dark'); } catch {}
+    });
+  }
+}
+
+// =============================================================================
 // API
 // =============================================================================
 
@@ -379,9 +432,15 @@ async function init() {
 
   document.getElementById('btn-cerrar-editar').addEventListener('click', () => showEditarPanel(false));
 
+  const btnCancelarEditar = document.getElementById('btn-cancelar-editar');
+  if (btnCancelarEditar) {
+    btnCancelarEditar.addEventListener('click', () => showEditarPanel(false));
+  }
+
   document.getElementById('editar-cantidad').addEventListener('input', e => {
     updateStockBajoBadge(parseInt(e.target.value) || 0);
   });
 }
 
+initTheme();
 init();
