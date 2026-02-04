@@ -584,5 +584,11 @@ body.theme-light {
     padding: 0.5rem 0.6rem;
     font-size: 0.8rem;
   }
+
+  /* Espacio extra para que la barra del navegador (Brave, Chrome, etc.) no tape los botones */
+  .view-panel {
+    padding-bottom: calc(1.5rem + 80px + env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+  }
 }
 
