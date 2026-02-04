@@ -15,6 +15,7 @@
   --success: #34a853;
   --warning: #f9ab00;
   --danger: #ea4335;
+  --stock-badge-bg: #1e3a5f;
   --radius: 6px;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -188,6 +189,13 @@ body {
   gap: 0.75rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.filters-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .filters select,
@@ -206,7 +214,7 @@ body {
 }
 
 .filters #filter-sort {
-  min-width: 180px;
+  min-width: 160px;
 }
 
 .filters select:focus,
@@ -266,9 +274,23 @@ body {
   text-align: right;
 }
 
-.cantidad-stock-bajo {
-  color: var(--warning);
+.badge-stock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 50%;
+  background: var(--stock-badge-bg);
+  color: #fff;
+  font-size: 0.85rem;
   font-weight: 600;
+  box-sizing: border-box;
+}
+
+.badge-stock-bajo {
+  background: var(--stock-badge-bg);
 }
 
 .badge {
@@ -417,6 +439,21 @@ body {
   background: color-mix(in srgb, var(--danger) 85%, black);
 }
 
+.btn-trash {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-trash svg {
+  display: block;
+}
+
 .btn-secondary:hover {
   background: var(--border);
 }
@@ -551,6 +588,16 @@ body {
 
 .detalle-actions {
   margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.detalle-actions-left {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* =============================================================================
@@ -569,6 +616,7 @@ body.theme-light {
   --success: #15803d;
   --warning: #c05621;
   --danger: #b91c1c;
+  --stock-badge-bg: #1e3a5f;
 }
 
 /* =============================================================================

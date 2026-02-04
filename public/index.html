@@ -12,7 +12,7 @@
     <header class="header">
       <div class="header-main">
         <h1>Stock Recambios</h1>
-        <p class="subtitle">Azcoyen · Jofemar</p>
+        <p class="subtitle">Azkoyen · Jofemar</p>
       </div>
       <div class="theme-toggle" aria-label="Cambiar tema">
         <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
@@ -30,14 +30,13 @@
       <!-- Vista: Listado -->
       <section id="view-listado" class="view active">
         <div class="filters">
-          <select id="filter-fabricante">
-            <option value="">Todos los fabricantes</option>
-            <option value="Azcoyen">Azcoyen</option>
-            <option value="Jofemar">Jofemar</option>
-          </select>
-          <input type="search" id="filter-search" placeholder="Buscar en tiempo real por código, nombre, alias, observaciones...">
-          <button id="btn-buscar">Buscar</button>
-          <select id="filter-sort" title="Ordenar por">
+          <div class="filters-group">
+            <select id="filter-fabricante">
+              <option value="">Todos los fabricantes</option>
+              <option value="Azkoyen">Azkoyen</option>
+              <option value="Jofemar">Jofemar</option>
+            </select>
+            <select id="filter-sort" title="Ordenar por">
             <option value="codigo_interno-asc">Código (A-Z)</option>
             <option value="codigo_interno-desc">Código (Z-A)</option>
             <option value="alias-asc">Alias (A-Z)</option>
@@ -51,6 +50,9 @@
             <option value="updated_at-desc">Más recientes</option>
             <option value="updated_at-asc">Más antiguos</option>
           </select>
+          </div>
+          <input type="search" id="filter-search" placeholder="Buscar en tiempo real por código, nombre, alias, observaciones...">
+          <button id="btn-buscar">Buscar</button>
         </div>
         <div class="table-container">
           <table class="data-table">
@@ -79,7 +81,7 @@
               <label for="nuevo-fabricante">Fabricante *</label>
               <select id="nuevo-fabricante" required>
                 <option value="">Seleccionar...</option>
-                <option value="Azcoyen">Azcoyen</option>
+                <option value="Azkoyen">Azkoyen</option>
                 <option value="Jofemar">Jofemar</option>
               </select>
             </div>
@@ -136,9 +138,13 @@
         </div>
         <div id="detalle-content" class="detalle-content"></div>
         <div class="form-actions detalle-actions">
-          <button type="button" id="btn-editar-desde-detalle" class="btn btn-primary">Editar</button>
-          <button type="button" id="btn-eliminar-desde-detalle" class="btn btn-danger">Eliminar</button>
-          <button type="button" id="btn-cerrar-detalle-abajo" class="btn btn-secondary">Cerrar</button>
+          <div class="detalle-actions-left">
+            <button type="button" id="btn-editar-desde-detalle" class="btn btn-primary">Editar</button>
+            <button type="button" id="btn-cerrar-detalle-abajo" class="btn btn-secondary">Cerrar</button>
+          </div>
+          <button type="button" id="btn-eliminar-desde-detalle" class="btn btn-danger btn-trash" title="Eliminar" aria-label="Eliminar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
         </div>
       </section>
 
@@ -154,7 +160,7 @@
             <div class="field">
               <label for="editar-fabricante">Fabricante *</label>
               <select id="editar-fabricante" required>
-                <option value="Azcoyen">Azcoyen</option>
+                <option value="Azkoyen">Azkoyen</option>
                 <option value="Jofemar">Jofemar</option>
               </select>
             </div>

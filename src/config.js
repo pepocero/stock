@@ -3,7 +3,7 @@
  * Punto de extensión: aquí se añadirán variables de entorno para auth, etc.
  */
 
-export const FABRICANTES = ['Azcoyen', 'Jofemar'];
+export const FABRICANTES = ['Azkoyen', 'Jofemar'];
 
 export const STOCK_BAJO_UMBRAL = 5;
 

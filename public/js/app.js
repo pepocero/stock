@@ -149,14 +149,14 @@ function renderTable(recambios, tbody) {
 
   tbody.innerHTML = recambios.map(r => {
     const stockBajo = r.cantidad < STOCK_BAJO_UMBRAL;
-    const cantidadClass = stockBajo ? 'cantidad-stock-bajo' : '';
+    const badgeClass = stockBajo ? 'badge-stock badge-stock-bajo' : 'badge-stock';
     return `
       <tr class="recambio-row" data-id="${r.id}" tabindex="0" role="button">
         <td>${escapeHtml(r.fabricante)}</td>
         <td>${escapeHtml(r.codigo_interno)}</td>
         <td>${escapeHtml(r.nombre_tecnico)}</td>
         <td>${escapeHtml(r.alias)}</td>
-        <td class="col-cantidad ${cantidadClass}">${r.cantidad}</td>
+        <td class="col-cantidad"><span class="${badgeClass}">${r.cantidad}</span></td>
         <td></td>
       </tr>
     `;
@@ -294,7 +294,7 @@ async function openDetalle(id) {
       </div>
       <div class="detalle-item">
         <span class="detalle-label">Stock</span>
-        <span class="detalle-value ${stockBajo ? 'cantidad-stock-bajo' : ''}">${recambio.cantidad}</span>
+        <span class="detalle-value"><span class="badge-stock ${stockBajo ? 'badge-stock-bajo' : ''}">${recambio.cantidad}</span></span>
       </div>
       <div class="detalle-item">
         <span class="detalle-label">Observaciones</span>

@@ -11,7 +11,7 @@ export function validarRecambio(data, excludeId = null) {
   const errors = [];
 
   if (!data.fabricante || !FABRICANTES.includes(data.fabricante)) {
-    errors.push('fabricante: debe ser Azcoyen o Jofemar');
+    errors.push('fabricante: debe ser Azkoyen o Jofemar');
   }
 
   const codigo = (data.codigo_interno || '').trim();

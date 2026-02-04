@@ -1,6 +1,6 @@
 # Stock Recambios
 
-Sistema de control de stock de recambios para empresas de reparación de máquinas (Azcoyen, Jofemar).
+Sistema de control de stock de recambios para empresas de reparación de máquinas (Azkoyen, Jofemar).
 
 **Cloudflare Pages + Functions** con base de datos D1.
 

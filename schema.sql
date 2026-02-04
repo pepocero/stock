@@ -7,7 +7,7 @@
 -- Tabla principal de recambios
 CREATE TABLE IF NOT EXISTS recambios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fabricante TEXT NOT NULL CHECK (fabricante IN ('Azcoyen', 'Jofemar')),
+    fabricante TEXT NOT NULL CHECK (fabricante IN ('Azkoyen', 'Jofemar')),
     codigo_interno TEXT NOT NULL UNIQUE,
     codigo_fabricante TEXT NOT NULL DEFAULT '',
     nombre_tecnico TEXT NOT NULL DEFAULT '',
