@@ -37,9 +37,7 @@ function initTheme() {
   }
 
   if (stored !== 'light' && stored !== 'dark') {
-    const prefersDark = window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    stored = prefersDark ? 'dark' : 'light';
+    stored = 'light';
   }
 
   applyTheme(stored);
