@@ -448,3 +448,32 @@ body {
   outline: none;
   border-color: var(--accent);
 }
+
+/* =============================================================================
+   Responsive - móviles
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .app {
+    padding: 1rem 0.75rem;
+  }
+
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 600px; /* permite scroll horizontal en pantallas estrechas */
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
