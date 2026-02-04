@@ -44,6 +44,6 @@ export async function onRequest(context) {
   } catch (err) {
     console.error(err);
     const msg = err?.cause?.message || err?.message || 'Error interno';
-    return error(msg.includes('no such table') ? 'Esquema no aplicado. Ejecuta: npx wrangler d1 execute stock-db --remote --file=./schema.sql --config wrangler.local.toml' : msg, 500);
+    return error(msg.includes('no such table') ? 'Esquema no aplicado. Ejecuta: npm run db:migrate' : msg, 500);
   }
 }

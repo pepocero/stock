@@ -19,12 +19,10 @@ npm install
 
 ### Desarrollo local
 
-Usa `wrangler.local.toml` (incluye D1). El deploy usa `wrangler.toml` (D1 desde el dashboard).
-
 1. Aplicar el esquema a la base de datos local (obligatorio antes del primer `npm run dev`):
 
 ```bash
-npx wrangler d1 execute stock-db --local --file=./schema.sql --config wrangler.local.toml
+npx wrangler d1 execute stock-db --local --file=./schema.sql
 ```
 
 2. Iniciar el servidor:

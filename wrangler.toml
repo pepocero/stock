@@ -2,5 +2,10 @@ name = "stock-recambios"
 compatibility_date = "2024-01-01"
 
 # Pages: directorio de salida estática (HTML, CSS, JS)
-# D1 se configura en el dashboard de Cloudflare (Settings → Bindings)
 pages_build_output_dir = "public"
+
+# D1: necesario para local. En producción el dashboard puede sobrescribir.
+[[d1_databases]]
+binding = "DB"
+database_name = "stock-db"
+database_id = "a4662b08-e159-473b-9e87-e92cd77d3bca"
