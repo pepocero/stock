@@ -19,19 +19,19 @@ npm install
 
 ### Desarrollo local
 
+Usa `wrangler.local.toml` (incluye D1). El deploy usa `wrangler.toml` (D1 desde el dashboard).
+
 1. Aplicar el esquema a la base de datos local (obligatorio antes del primer `npm run dev`):
 
 ```bash
-npx wrangler d1 execute stock-db --local --file=./schema.sql
+npx wrangler d1 execute stock-db --local --file=./schema.sql --config wrangler.local.toml
 ```
 
-2. Iniciar el servidor (usa `--persist` para que Pages comparta la misma BD local):
+2. Iniciar el servidor:
 
 ```bash
 npm run dev
 ```
-
-3. El `database_id` en `wrangler.toml` puede dejarse como está para desarrollo local.
 
 ### Producción (Cloudflare)
 

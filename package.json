@@ -4,8 +4,8 @@
   "description": "Sistema de control de stock de recambios para reparación de máquinas",
   "type": "module",
   "scripts": {
-    "predev": "wrangler d1 execute stock-db --local --file=./schema.sql",
-    "dev": "wrangler pages dev public --persist-to .wrangler/state",
+    "predev": "wrangler d1 execute stock-db --local --file=./schema.sql --config wrangler.local.toml",
+    "dev": "wrangler pages dev public --config wrangler.local.toml --persist-to .wrangler/state",
     "deploy": "wrangler pages deploy public",
     "db:create": "wrangler d1 create stock-db",
     "db:migrate": "wrangler d1 execute stock-db --remote --file=./schema.sql",

@@ -1,0 +1,11 @@
+# Configuración para desarrollo local (incluye D1)
+# Uso: wrangler pages dev public --config wrangler.local.toml --persist-to .wrangler/state
+
+name = "stock-recambios"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stock-db"
+database_id = "a4662b08-e159-473b-9e87-e92cd77d3bca"
