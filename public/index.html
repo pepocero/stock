@@ -35,8 +35,22 @@
             <option value="Azcoyen">Azcoyen</option>
             <option value="Jofemar">Jofemar</option>
           </select>
-          <input type="search" id="filter-search" placeholder="Buscar por código, nombre o alias...">
+          <input type="search" id="filter-search" placeholder="Buscar en tiempo real por código, nombre, alias, observaciones...">
           <button id="btn-buscar">Buscar</button>
+          <select id="filter-sort" title="Ordenar por">
+            <option value="codigo_interno-asc">Código (A-Z)</option>
+            <option value="codigo_interno-desc">Código (Z-A)</option>
+            <option value="alias-asc">Alias (A-Z)</option>
+            <option value="alias-desc">Alias (Z-A)</option>
+            <option value="nombre_tecnico-asc">Nombre técnico (A-Z)</option>
+            <option value="nombre_tecnico-desc">Nombre técnico (Z-A)</option>
+            <option value="fabricante-asc">Fabricante (A-Z)</option>
+            <option value="fabricante-desc">Fabricante (Z-A)</option>
+            <option value="cantidad-asc">Stock (menor a mayor)</option>
+            <option value="cantidad-desc">Stock (mayor a menor)</option>
+            <option value="updated_at-desc">Más recientes</option>
+            <option value="updated_at-asc">Más antiguos</option>
+          </select>
         </div>
         <div class="table-container">
           <table class="data-table">
@@ -123,6 +137,7 @@
         <div id="detalle-content" class="detalle-content"></div>
         <div class="form-actions detalle-actions">
           <button type="button" id="btn-editar-desde-detalle" class="btn btn-primary">Editar</button>
+          <button type="button" id="btn-eliminar-desde-detalle" class="btn btn-danger">Eliminar</button>
           <button type="button" id="btn-cerrar-detalle-abajo" class="btn btn-secondary">Cerrar</button>
         </div>
       </section>

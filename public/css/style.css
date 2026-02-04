@@ -205,6 +205,10 @@ body {
   min-width: 200px;
 }
 
+.filters #filter-sort {
+  min-width: 180px;
+}
+
 .filters select:focus,
 .filters input:focus {
   outline: none;
@@ -402,6 +406,15 @@ body {
   background: var(--bg-input);
   color: var(--text);
   border: 1px solid var(--border);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 85%, black);
 }
 
 .btn-secondary:hover {

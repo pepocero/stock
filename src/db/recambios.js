@@ -4,11 +4,13 @@
  * La lógica de negocio está en services/
  */
 
+const SORT_COLUMNS = ['codigo_interno', 'alias', 'nombre_tecnico', 'fabricante', 'cantidad', 'updated_at'];
+
 /**
- * Lista recambios con filtros y búsqueda
+ * Lista recambios con filtros, búsqueda y ordenación
  * El listado no incluye custom_fields (se cargan en getById para rendimiento)
  */
-export async function listRecambios(db, { fabricante, search, limit = 100, offset = 0 } = {}) {
+export async function listRecambios(db, { fabricante, search, sortBy, sortOrder, limit = 100, offset = 0 } = {}) {
   let query = 'SELECT * FROM recambios WHERE 1=1';
   const params = [];
 
@@ -19,11 +21,17 @@ export async function listRecambios(db, { fabricante, search, limit = 100, offse
 
   if (search && search.trim()) {
     const searchTerm = `%${search.trim()}%`;
-    query += ' AND (codigo_interno LIKE ? OR nombre_tecnico LIKE ? OR alias LIKE ?)';
-    params.push(searchTerm, searchTerm, searchTerm);
+    query += ` AND (
+      codigo_interno LIKE ? OR codigo_fabricante LIKE ? OR
+      nombre_tecnico LIKE ? OR alias LIKE ? OR
+      fabricante LIKE ? OR observaciones LIKE ?
+    )`;
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
-  query += ' ORDER BY updated_at DESC LIMIT ? OFFSET ?';
+  const col = SORT_COLUMNS.includes(sortBy) ? sortBy : 'updated_at';
+  const dir = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  query += ` ORDER BY ${col} ${dir} LIMIT ? OFFSET ?`;
   params.push(limit, offset);
 
   const result = await db.prepare(query).bind(...params).all();
@@ -127,6 +135,14 @@ export async function updateRecambio(db, id, data) {
   if (data.custom_fields !== undefined) {
     await saveCustomValues(db, id, data.custom_fields);
   }
+}
+
+/**
+ * Elimina un recambio por ID (cascade elimina recambios_custom_values)
+ */
+export async function deleteRecambio(db, id) {
+  const result = await db.prepare('DELETE FROM recambios WHERE id = ?').bind(id).run();
+  return result.meta.changes > 0;
 }
 
 /**

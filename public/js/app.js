@@ -13,6 +13,7 @@ let customFieldsDefinitions = [];
 // =============================================================================
 
 const THEME_STORAGE_KEY = 'stock_theme';
+const SORT_STORAGE_KEY = 'stock_sort';
 
 function applyTheme(theme) {
   const body = document.body;
@@ -303,7 +304,23 @@ async function openDetalle(id) {
     `;
 
     document.getElementById('btn-editar-desde-detalle').dataset.id = recambio.id;
+    document.getElementById('btn-eliminar-desde-detalle').dataset.id = recambio.id;
     showDetallePanel(true);
+  } catch (err) {
+    showFeedback(err.message, 'error');
+  }
+}
+
+async function eliminarRecambioDesdeDetalle() {
+  const id = document.getElementById('btn-eliminar-desde-detalle').dataset.id;
+  if (!id) return;
+  if (!confirm('¿Eliminar este recambio? Esta acción no se puede deshacer.')) return;
+
+  try {
+    await api(`/recambios/${id}`, { method: 'DELETE' });
+    showFeedback('Recambio eliminado', 'success');
+    showDetallePanel(false);
+    loadRecambios();
   } catch (err) {
     showFeedback(err.message, 'error');
   }
@@ -507,8 +524,35 @@ async function init() {
   document.getElementById('form-editar').addEventListener('submit', submitEditar);
 
   document.getElementById('btn-buscar').addEventListener('click', loadRecambios);
+
+  let searchDebounceTimer;
+  document.getElementById('filter-search').addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const searchInput = document.getElementById('filter-search');
+    if (!searchInput.value.trim()) {
+      loadRecambios();
+    } else {
+      searchDebounceTimer = setTimeout(loadRecambios, 150);
+    }
+  });
   document.getElementById('filter-search').addEventListener('keypress', e => {
     if (e.key === 'Enter') loadRecambios();
+  });
+
+  document.getElementById('filter-fabricante').addEventListener('change', loadRecambios);
+
+  const filterSort = document.getElementById('filter-sort');
+  try {
+    const storedSort = localStorage.getItem(SORT_STORAGE_KEY);
+    if (storedSort && filterSort.querySelector(`option[value="${storedSort}"]`)) {
+      filterSort.value = storedSort;
+    }
+  } catch {}
+  filterSort.addEventListener('change', () => {
+    try {
+      localStorage.setItem(SORT_STORAGE_KEY, filterSort.value);
+    } catch {}
+    loadRecambios();
   });
 
   document.getElementById('btn-cerrar-editar').addEventListener('click', () => showEditarPanel(false));
@@ -523,6 +567,8 @@ async function init() {
       openEditar(parseInt(id));
     }
   });
+
+  document.getElementById('btn-eliminar-desde-detalle').addEventListener('click', eliminarRecambioDesdeDetalle);
 
   const btnCancelarEditar = document.getElementById('btn-cancelar-editar');
   if (btnCancelarEditar) {

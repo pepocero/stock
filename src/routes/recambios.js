@@ -32,10 +32,12 @@ export async function handleRecambios(request, env, url) {
   if (method === 'GET') {
     const fabricante = url.searchParams.get('fabricante');
     const search = url.searchParams.get('search');
+    const sortBy = url.searchParams.get('sortBy');
+    const sortOrder = url.searchParams.get('sortOrder');
     const limit = Math.min(parseInt(url.searchParams.get('limit')) || 100, 500);
     const offset = parseInt(url.searchParams.get('offset')) || 0;
 
-    const recambios = await recambiosDb.listRecambios(env.DB, { fabricante, search, limit, offset });
+    const recambios = await recambiosDb.listRecambios(env.DB, { fabricante, search, sortBy, sortOrder, limit, offset });
     return json(recambios);
   }
 
@@ -69,7 +71,7 @@ export async function handleRecambioById(request, env, url, id) {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, PUT, PATCH, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, PUT, PATCH, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Max-Age': '86400'
       }
@@ -121,6 +123,14 @@ export async function handleRecambioById(request, env, url, id) {
       const result = await recambiosService.actualizarRecambio(env.DB, recambioId, body);
       if (!result.success) return error(result.errors.join('; '), 400);
     }
+    return json({ ok: true });
+  }
+
+  if (method === 'DELETE') {
+    if (!hasPermission('write', {})) return error('No autorizado', 403);
+
+    const deleted = await recambiosDb.deleteRecambio(env.DB, recambioId);
+    if (!deleted) return error('Recambio no encontrado', 404);
     return json({ ok: true });
   }
 
