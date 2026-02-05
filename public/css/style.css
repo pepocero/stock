@@ -817,7 +817,6 @@ body {
   padding: 0;
   border: none;
   border-radius: var(--radius);
-  background: var(--success);
   color: #fff;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -825,8 +824,19 @@ body {
   transition: background 0.2s, transform 0.1s;
 }
 
-.detalle-accion-row .btn-check:hover {
-  background: #2d9d4a;
+.detalle-accion-row .btn-check-utilizado {
+  background: var(--danger);
+}
+.detalle-accion-row .btn-check-utilizado:hover {
+  background: #c53929;
+  transform: scale(1.05);
+}
+
+.detalle-accion-row .btn-check-recuperado {
+  background: var(--accent);
+}
+.detalle-accion-row .btn-check-recuperado:hover {
+  background: var(--accent-hover);
   transform: scale(1.05);
 }
 
