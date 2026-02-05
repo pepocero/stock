@@ -344,6 +344,11 @@ async function registrarUtilizado() {
     showFeedback('Selecciona una cantidad mayor a 0', 'error');
     return;
   }
+  const stockActual = parseInt(document.getElementById('detalle-stock-badge')?.textContent, 10) || 0;
+  if (stockActual < cantidad) {
+    showFeedback(`Stock insuficiente. Disponible: ${stockActual}`, 'error');
+    return;
+  }
   try {
     await api(`/recambios/${id}/utilizar`, { method: 'POST', body: { fecha, cantidad } });
     const msg = cantidad === 1 ? 'El stock se ha disminuido en 1 unidad.' : `El stock se ha disminuido en ${cantidad} unidades.`;
