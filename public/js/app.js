@@ -346,7 +346,8 @@ async function registrarUtilizado() {
   }
   try {
     await api(`/recambios/${id}/utilizar`, { method: 'POST', body: { fecha, cantidad } });
-    showFeedback('Uso registrado correctamente', 'success');
+    const msg = cantidad === 1 ? 'El stock se ha disminuido en 1 unidad.' : `El stock se ha disminuido en ${cantidad} unidades.`;
+    showModalNotificacion('Recambio Utilizado', msg);
     const recambio = await api(`/recambios/${id}`);
     const badge = document.getElementById('detalle-stock-badge');
     if (badge) badge.textContent = recambio.cantidad;
@@ -369,7 +370,8 @@ async function registrarRecuperado() {
   }
   try {
     await api(`/recambios/${id}/recuperar`, { method: 'POST', body: { fecha, cantidad } });
-    showFeedback('Recepción registrada correctamente', 'success');
+    const msg = cantidad === 1 ? 'El stock se ha aumentado en 1 unidad.' : `El stock se ha aumentado en ${cantidad} unidades.`;
+    showModalNotificacion('Recambio Recuperado', msg);
     const recambio = await api(`/recambios/${id}`);
     const badge = document.getElementById('detalle-stock-badge');
     if (badge) badge.textContent = recambio.cantidad;
@@ -487,6 +489,22 @@ function showFeedback(msg, type) {
     el.classList.remove('toast-visible');
     setTimeout(() => el.remove(), 300);
   }, 3500);
+}
+
+function showModalNotificacion(titulo, mensaje) {
+  const overlay = document.getElementById('modal-notificacion');
+  const tituloEl = overlay.querySelector('.modal-notificacion-titulo');
+  const mensajeEl = overlay.querySelector('.modal-notificacion-mensaje');
+  if (!overlay || !tituloEl || !mensajeEl) return;
+  tituloEl.textContent = titulo;
+  mensajeEl.textContent = mensaje;
+  overlay.classList.remove('hidden');
+  overlay.querySelector('#btn-cerrar-modal-notificacion')?.focus();
+}
+
+function closeModalNotificacion() {
+  const overlay = document.getElementById('modal-notificacion');
+  if (overlay) overlay.classList.add('hidden');
 }
 
 // =============================================================================
@@ -1098,6 +1116,17 @@ async function init() {
 
   document.getElementById('btn-cerrar-detalle').addEventListener('click', () => showDetallePanel(false));
   document.getElementById('btn-cerrar-detalle-abajo').addEventListener('click', () => showDetallePanel(false));
+
+  document.getElementById('btn-cerrar-modal-notificacion')?.addEventListener('click', closeModalNotificacion);
+  document.getElementById('modal-notificacion')?.addEventListener('click', e => {
+    if (e.target.id === 'modal-notificacion') closeModalNotificacion();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('modal-notificacion');
+      if (modal && !modal.classList.contains('hidden')) closeModalNotificacion();
+    }
+  });
 
   document.getElementById('btn-editar-desde-detalle').addEventListener('click', () => {
     const id = document.getElementById('btn-editar-desde-detalle').dataset.id;

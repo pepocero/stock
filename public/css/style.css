@@ -517,6 +517,61 @@ body {
   color: #fff;
 }
 
+/* Modal notificación (Recambio Utilizado/Recuperado) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 1rem;
+  animation: modal-fade-in 0.2s ease;
+}
+.modal-overlay.hidden {
+  display: none !important;
+}
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-notificacion-box {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  animation: modal-slide-in 0.25s ease;
+}
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.modal-notificacion-titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal-notificacion-mensaje {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.modal-notificacion-box .btn {
+  min-width: 120px;
+}
+
 /* Error message (legacy/inline) */
 .error-msg {
   background: rgba(234, 67, 53, 0.15);
