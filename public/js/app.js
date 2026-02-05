@@ -168,6 +168,7 @@ function renderTable(recambios, tbody) {
           <input type="checkbox" class="recambio-checkbox" data-id="${r.id}" aria-label="Seleccionar recambio ${r.id}">
         </td>
         <td>${escapeHtml(r.codigo)}</td>
+        <td>${escapeHtml(r.alias || '')}</td>
         <td>${escapeHtml(r.nombre)}</td>
         <td>${escapeHtml(r.fabricante)}</td>
         <td class="col-cantidad"><span class="${badgeClass}">${r.cantidad}</span></td>
