@@ -251,6 +251,7 @@ async function submitNuevo(e) {
     codigo: document.getElementById('nuevo-codigo').value.trim(),
     nombre: document.getElementById('nuevo-nombre').value.trim(),
     fabricante: document.getElementById('nuevo-fabricante').value,
+    alias: document.getElementById('nuevo-alias').value.trim() || '',
     cantidad: parseInt(document.getElementById('nuevo-cantidad').value) || 0
   };
 
@@ -296,6 +297,10 @@ async function openDetalle(id) {
       <div class="detalle-item">
         <span class="detalle-label">Fabricante</span>
         <span class="detalle-value">${escapeHtml(recambio.fabricante)}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Alias</span>
+        <span class="detalle-value ${!recambio.alias ? 'empty' : ''}">${escapeHtml(recambio.alias) || '—'}</span>
       </div>
       <div class="detalle-item">
         <span class="detalle-label">Stock</span>
@@ -400,6 +405,7 @@ async function openEditar(id) {
     document.getElementById('editar-codigo').value = recambio.codigo;
     document.getElementById('editar-nombre').value = recambio.nombre || '';
     document.getElementById('editar-fabricante').value = recambio.fabricante;
+    document.getElementById('editar-alias').value = recambio.alias || '';
     const cantidad = Math.max(0, parseInt(recambio.cantidad) || 0);
     const cantidadSelect = document.getElementById('editar-cantidad');
     cantidadSelect.value = String(Math.min(8, cantidad));
@@ -430,6 +436,7 @@ async function submitEditar(e) {
     codigo: document.getElementById('editar-codigo').value.trim(),
     nombre: document.getElementById('editar-nombre').value.trim(),
     fabricante: document.getElementById('editar-fabricante').value,
+    alias: document.getElementById('editar-alias').value.trim() || '',
     cantidad: Math.max(0, parseInt(document.getElementById('editar-cantidad').value) || 0)
   };
 
@@ -599,6 +606,7 @@ const IMPORT_FIELDS = [
   { key: 'codigo', label: 'Código' },
   { key: 'nombre', label: 'Nombre' },
   { key: 'fabricante', label: 'Fabricante' },
+  { key: 'alias', label: 'Alias' },
   { key: 'cantidad', label: 'Stock' }
 ];
 

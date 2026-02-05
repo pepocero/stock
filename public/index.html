@@ -81,37 +81,28 @@
         <form id="form-nuevo" class="form-recambio">
           <div class="form-grid">
             <div class="field">
+              <label for="nuevo-codigo">Código *</label>
+              <input type="text" id="nuevo-codigo" required placeholder="Ej: AZC-001">
+            </div>
+            <div class="field">
+              <label for="nuevo-nombre">Nombre *</label>
+              <input type="text" id="nuevo-nombre" required placeholder="Nombre del recambio">
+            </div>
+            <div class="field">
               <label for="nuevo-fabricante">Fabricante *</label>
               <select id="nuevo-fabricante" required>
                 <option value="">Seleccionar...</option>
               </select>
             </div>
             <div class="field">
-              <label for="nuevo-codigo-interno">Código interno *</label>
-              <input type="text" id="nuevo-codigo-interno" required placeholder="Ej: AZC-001">
-            </div>
-            <div class="field">
-              <label for="nuevo-codigo-fabricante">Código fabricante</label>
-              <input type="text" id="nuevo-codigo-fabricante" placeholder="Código del fabricante">
-            </div>
-            <div class="field">
-              <label for="nuevo-nombre-tecnico">Nombre técnico</label>
-              <input type="text" id="nuevo-nombre-tecnico" placeholder="Nombre técnico del recambio">
-            </div>
-            <div class="field">
               <label for="nuevo-alias">Alias</label>
-              <input type="text" id="nuevo-alias" placeholder="Nombre coloquial">
+              <input type="text" id="nuevo-alias" placeholder="Nombre coloquial (opcional)">
             </div>
             <div class="field">
-              <label for="nuevo-cantidad">Cantidad *</label>
+              <label for="nuevo-cantidad">Stock *</label>
               <input type="number" id="nuevo-cantidad" min="0" value="0" required>
             </div>
           </div>
-          <div class="field">
-            <label for="nuevo-observaciones">Observaciones</label>
-            <textarea id="nuevo-observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
-          </div>
-          <div id="nuevo-custom-fields" class="custom-fields-section"></div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Guardar recambio</button>
             <button type="reset" class="btn btn-secondary">Limpiar</button>
@@ -275,6 +266,10 @@
               <label for="editar-fabricante">Fabricante *</label>
               <select id="editar-fabricante" required>
               </select>
+            </div>
+            <div class="field">
+              <label for="editar-alias">Alias</label>
+              <input type="text" id="editar-alias" placeholder="Nombre coloquial (opcional)">
             </div>
             <div class="field field-stock">
               <label for="editar-cantidad">Stock *</label>

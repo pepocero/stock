@@ -21,9 +21,9 @@ export async function listRecambios(db, { fabricante, search, sortBy, sortOrder,
   if (search && search.trim()) {
     const searchTerm = `%${search.trim()}%`;
     query += ` AND (
-      codigo LIKE ? OR nombre LIKE ? OR fabricante LIKE ?
+      codigo LIKE ? OR nombre LIKE ? OR fabricante LIKE ? OR alias LIKE ?
     )`;
-    params.push(searchTerm, searchTerm, searchTerm);
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
   const col = SORT_COLUMNS.includes(sortBy) ? sortBy : 'nombre';
@@ -85,6 +85,7 @@ export async function updateRecambio(db, id, data) {
       codigo = ?,
       nombre = ?,
       fabricante = ?,
+      alias = ?,
       cantidad = ?,
       updated_at = datetime('now')
     WHERE id = ?
@@ -92,6 +93,7 @@ export async function updateRecambio(db, id, data) {
     data.codigo,
     data.nombre || '',
     data.fabricante,
+    data.alias || '',
     Math.max(0, parseInt(data.cantidad) || 0),
     id
   ).run();

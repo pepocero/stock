@@ -13,7 +13,9 @@
     "db:migrate:004": "wrangler d1 execute stock-db --local --file=./migrations/004_utilizados_recuperados.sql",
     "db:migrate:005": "wrangler d1 execute stock-db --local --file=./migrations/005_recambios_old_to_new.sql",
     "db:migrate:004:remote": "wrangler d1 execute stock-db --remote --file=./migrations/004_utilizados_recuperados.sql",
-    "db:migrate:005:remote": "wrangler d1 execute stock-db --remote --file=./migrations/005_recambios_old_to_new.sql"
+    "db:migrate:005:remote": "wrangler d1 execute stock-db --remote --file=./migrations/005_recambios_old_to_new.sql",
+    "db:migrate:006": "wrangler d1 execute stock-db --local --file=./migrations/006_add_alias.sql",
+    "db:migrate:006:remote": "wrangler d1 execute stock-db --remote --file=./migrations/006_add_alias.sql"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"

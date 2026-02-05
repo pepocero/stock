@@ -84,6 +84,21 @@ export async function actualizarStock(db, id, cantidad) {
   return { success: true };
 }
 
+function normalizarFechaYYYYMMDD(val) {
+  if (!val || typeof val !== 'string') return new Date().toISOString().slice(0, 10);
+  const t = val.trim();
+  if (!t) return new Date().toISOString().slice(0, 10);
+  const mDDMM = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mDDMM) {
+    const [, d, m, y] = mDDMM;
+    const pad = n => String(n).padStart(2, '0');
+    return `${y}-${pad(m)}-${pad(d)}`;
+  }
+  const mYYYY = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (mYYYY) return t;
+  return new Date().toISOString().slice(0, 10);
+}
+
 export async function registrarUtilizado(db, recambioId, { fecha, cantidad }) {
   const recambio = await recambiosDb.getRecambioById(db, recambioId);
   if (!recambio) {
@@ -100,8 +115,9 @@ export async function registrarUtilizado(db, recambioId, { fecha, cantidad }) {
     return { success: false, errors: [`Stock insuficiente. Disponible: ${stockActual}`] };
   }
 
+  const fechaNorm = normalizarFechaYYYYMMDD(fecha);
   await utilizadosDb.insertUtilizado(db, {
-    fecha: fecha || new Date().toISOString().slice(0, 10),
+    fecha: fechaNorm,
     codigo: recambio.codigo,
     cantidad: qty
   });
@@ -163,6 +179,7 @@ export async function importarRecambios(db, items) {
       fabricante,
       codigo,
       nombre: (item.nombre || '').toString().trim() || '',
+      alias: (item.alias || '').toString().trim() || '',
       cantidad: parseInt(item.cantidad, 10) || 0
     };
 
