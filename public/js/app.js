@@ -142,7 +142,7 @@ async function loadRecambios() {
     const recambios = await api(`/recambios?${params}`);
     renderTable(recambios, tbody);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="error-msg">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="error-msg">${err.message}</td></tr>`;
   }
 }
 
@@ -880,14 +880,24 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
 }
 
 function updateExportarSeleccionadosBtn(tipo) {
-  const btn = document.getElementById(`btn-exportar-${tipo}-seleccionados`);
   const checked = document.querySelectorAll(`.registro-fecha-checkbox[data-tipo="${tipo}"]:checked`);
-  if (btn) {
-    if (checked.length > 0) {
-      btn.classList.remove('hidden');
-      btn.textContent = `Exportar seleccionados (${checked.length})`;
+  const visible = checked.length > 0;
+  const btnExportar = document.getElementById(`btn-exportar-${tipo}-seleccionados`);
+  const btnBorrar = document.getElementById(`btn-borrar-${tipo}-seleccionados`);
+  if (btnExportar) {
+    if (visible) {
+      btnExportar.classList.remove('hidden');
+      btnExportar.textContent = `Exportar seleccionados (${checked.length})`;
     } else {
-      btn.classList.add('hidden');
+      btnExportar.classList.add('hidden');
+    }
+  }
+  if (btnBorrar) {
+    if (visible) {
+      btnBorrar.classList.remove('hidden');
+      btnBorrar.textContent = `Borrar seleccionados (${checked.length})`;
+    } else {
+      btnBorrar.classList.add('hidden');
     }
   }
 }
@@ -954,6 +964,34 @@ function exportarRecuperadosSeleccionados() {
   exportarRegistrosExcel('Recambios Recuperados', items);
 }
 
+async function borrarUtilizadosSeleccionados() {
+  const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
+  const fechas = Array.from(new Set(Array.from(checked).map(cb => cb.dataset.fecha)));
+  if (!fechas.length) return;
+  if (!confirm(`¿Borrar ${fechas.length} día(s) de recambios utilizados? Esta acción no se puede deshacer.`)) return;
+  try {
+    await api('/utilizados/batch-delete', { method: 'POST', body: JSON.stringify({ fechas }) });
+    showFeedback('Registros borrados correctamente', 'success');
+    loadUtilizados();
+  } catch (err) {
+    showFeedback(err.message || 'Error al borrar', 'error');
+  }
+}
+
+async function borrarRecuperadosSeleccionados() {
+  const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="recuperados"]:checked');
+  const fechas = Array.from(new Set(Array.from(checked).map(cb => cb.dataset.fecha)));
+  if (!fechas.length) return;
+  if (!confirm(`¿Borrar ${fechas.length} día(s) de recambios recuperados? Esta acción no se puede deshacer.`)) return;
+  try {
+    await api('/recuperados/batch-delete', { method: 'POST', body: { fechas } });
+    showFeedback('Registros borrados correctamente', 'success');
+    loadRecuperados();
+  } catch (err) {
+    showFeedback(err.message || 'Error al borrar', 'error');
+  }
+}
+
 function handleImportFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1006,6 +1044,8 @@ async function init() {
 
   document.getElementById('btn-exportar-utilizados-seleccionados')?.addEventListener('click', exportarUtilizadosSeleccionados);
   document.getElementById('btn-exportar-recuperados-seleccionados')?.addEventListener('click', exportarRecuperadosSeleccionados);
+  document.getElementById('btn-borrar-utilizados-seleccionados')?.addEventListener('click', borrarUtilizadosSeleccionados);
+  document.getElementById('btn-borrar-recuperados-seleccionados')?.addEventListener('click', borrarRecuperadosSeleccionados);
 
   const importFileInput = document.getElementById('import-file');
   const btnSelectFile = document.getElementById('btn-select-file');

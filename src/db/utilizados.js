@@ -19,3 +19,12 @@ export async function listUtilizados(db) {
   `).all();
   return result.results || [];
 }
+
+export async function deleteByFechas(db, fechas) {
+  if (!fechas || fechas.length === 0) return 0;
+  const placeholders = fechas.map(() => '?').join(',');
+  const result = await db.prepare(
+    `DELETE FROM utilizados WHERE fecha IN (${placeholders})`
+  ).bind(...fechas).run();
+  return result.meta.changes || 0;
+}
