@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Stock Recambios - Control de inventario</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
@@ -24,7 +24,10 @@
       <button class="tab active" data-view="listado">Listado</button>
       <button class="tab" data-view="nuevo">Nuevo recambio</button>
       <button class="tab" data-view="importar">Importar</button>
-      <button class="tab" data-view="campos">Campos adicionales</button>
+      <button class="tab" data-view="fabricantes">Fabricantes</button>
+      <button class="tab" data-view="utilizados">Recambios Utilizados</button>
+      <button class="tab" data-view="recuperados">Recambios Recuperados</button>
+      <!-- <button class="tab" data-view="campos">Campos adicionales</button> -->
     </nav>
 
     <main class="content">
@@ -34,17 +37,12 @@
           <div class="filters-group">
             <select id="filter-fabricante">
               <option value="">Todos los fabricantes</option>
-              <option value="Azkoyen">Azkoyen</option>
-              <option value="Jofemar">Jofemar</option>
-              <option value="No Asignado">No Asignado</option>
             </select>
             <select id="filter-sort" title="Ordenar por">
-            <option value="codigo_interno-asc">Código (A-Z)</option>
-            <option value="codigo_interno-desc">Código (Z-A)</option>
-            <option value="alias-asc">Alias (A-Z)</option>
-            <option value="alias-desc">Alias (Z-A)</option>
-            <option value="nombre_tecnico-asc">Nombre técnico (A-Z)</option>
-            <option value="nombre_tecnico-desc">Nombre técnico (Z-A)</option>
+            <option value="nombre-asc" selected>Nombre (A-Z)</option>
+            <option value="nombre-desc">Nombre (Z-A)</option>
+            <option value="codigo-asc">Código (A-Z)</option>
+            <option value="codigo-desc">Código (Z-A)</option>
             <option value="fabricante-asc">Fabricante (A-Z)</option>
             <option value="fabricante-desc">Fabricante (Z-A)</option>
             <option value="cantidad-asc">Stock (menor a mayor)</option>
@@ -64,16 +62,15 @@
                 <th class="col-checkbox">
                   <input type="checkbox" id="select-all-recambios" title="Seleccionar todos" aria-label="Seleccionar todos">
                 </th>
+                <th>Código</th>
+                <th>Nombre</th>
                 <th>Fabricante</th>
-                <th>Código interno</th>
-                <th>Nombre técnico</th>
-                <th>Alias</th>
                 <th class="col-cantidad">Stock</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="table-body">
-              <tr><td colspan="7" class="loading">Cargando...</td></tr>
+              <tr><td colspan="6" class="loading">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -87,8 +84,6 @@
               <label for="nuevo-fabricante">Fabricante *</label>
               <select id="nuevo-fabricante" required>
                 <option value="">Seleccionar...</option>
-                <option value="Azkoyen">Azkoyen</option>
-                <option value="Jofemar">Jofemar</option>
               </select>
             </div>
             <div class="field">
@@ -155,6 +150,38 @@
         </div>
       </section>
 
+      <!-- Vista: Fabricantes -->
+      <section id="view-fabricantes" class="view">
+        <div class="form-recambio">
+          <p class="campos-desc">Configura los fabricantes disponibles. Se usarán al crear o editar recambios y al filtrar el listado.</p>
+          <div id="fabricantes-lista" class="campos-lista"></div>
+          <div class="campos-nuevo">
+            <input type="text" id="nuevo-fabricante-nombre" placeholder="Nombre del fabricante (ej: Azkoyen, Jofemar)">
+            <button type="button" id="btn-add-fabricante" class="btn btn-primary">Añadir fabricante</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista: Recambios Utilizados -->
+      <section id="view-utilizados" class="view">
+        <div class="registros-section">
+          <div class="registros-toolbar">
+            <button type="button" id="btn-exportar-utilizados-seleccionados" class="btn btn-primary btn-sm hidden">Exportar seleccionados</button>
+          </div>
+          <div id="utilizados-list" class="registros-por-fecha"></div>
+        </div>
+      </section>
+
+      <!-- Vista: Recambios Recuperados -->
+      <section id="view-recuperados" class="view">
+        <div class="registros-section">
+          <div class="registros-toolbar">
+            <button type="button" id="btn-exportar-recuperados-seleccionados" class="btn btn-primary btn-sm hidden">Exportar seleccionados</button>
+          </div>
+          <div id="recuperados-list" class="registros-por-fecha"></div>
+        </div>
+      </section>
+
       <!-- Vista: Campos adicionales (editar nombres) -->
       <section id="view-campos" class="view">
         <div class="form-recambio">
@@ -173,7 +200,49 @@
           <h2>Detalle del recambio</h2>
           <button id="btn-cerrar-detalle" class="btn-close">×</button>
         </div>
-        <div id="detalle-content" class="detalle-content"></div>
+        <div id="detalle-content" class="detalle-content">
+          <div class="detalle-section utilizados-section">
+            <h3 class="detalle-section-title">Recambio Utilizado</h3>
+            <div class="detalle-accion-row">
+              <input type="date" id="detalle-fecha-utilizado" class="input-fecha">
+              <select id="detalle-cantidad-utilizado" class="select-cantidad">
+                <option value="0">0</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+              <button type="button" id="btn-check-utilizado" class="btn btn-check" title="Registrar uso">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </button>
+            </div>
+          </div>
+          <div class="detalle-section recuperados-section">
+            <h3 class="detalle-section-title">Recambio Recuperado</h3>
+            <div class="detalle-accion-row">
+              <input type="date" id="detalle-fecha-recuperado" class="input-fecha">
+              <select id="detalle-cantidad-recuperado" class="select-cantidad">
+                <option value="0">0</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+              <button type="button" id="btn-check-recuperado" class="btn btn-check" title="Registrar recepción">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </button>
+            </div>
+          </div>
+          <div id="detalle-info" class="detalle-info"></div>
+        </div>
         <div class="form-actions detalle-actions">
           <div class="detalle-actions-left">
             <button type="button" id="btn-editar-desde-detalle" class="btn btn-primary">Editar</button>
@@ -195,40 +264,34 @@
           <input type="hidden" id="editar-id">
           <div class="form-grid">
             <div class="field">
+              <label for="editar-codigo">Código *</label>
+              <input type="text" id="editar-codigo" required>
+            </div>
+            <div class="field">
+              <label for="editar-nombre">Nombre *</label>
+              <input type="text" id="editar-nombre" required>
+            </div>
+            <div class="field">
               <label for="editar-fabricante">Fabricante *</label>
               <select id="editar-fabricante" required>
-                <option value="Azkoyen">Azkoyen</option>
-                <option value="Jofemar">Jofemar</option>
-                <option value="No Asignado">No Asignado</option>
               </select>
-            </div>
-            <div class="field">
-              <label for="editar-codigo-interno">Código interno *</label>
-              <input type="text" id="editar-codigo-interno" required>
-            </div>
-            <div class="field">
-              <label for="editar-codigo-fabricante">Código fabricante</label>
-              <input type="text" id="editar-codigo-fabricante">
-            </div>
-            <div class="field">
-              <label for="editar-nombre-tecnico">Nombre técnico</label>
-              <input type="text" id="editar-nombre-tecnico">
-            </div>
-            <div class="field">
-              <label for="editar-alias">Alias</label>
-              <input type="text" id="editar-alias">
             </div>
             <div class="field field-stock">
               <label for="editar-cantidad">Stock *</label>
-              <input type="number" id="editar-cantidad" min="0" required>
+              <select id="editar-cantidad" required>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
               <span id="stock-bajo-badge" class="badge badge-warning hidden">Stock bajo</span>
             </div>
           </div>
-          <div class="field">
-            <label for="editar-observaciones">Observaciones</label>
-            <textarea id="editar-observaciones" rows="3"></textarea>
-          </div>
-          <div id="editar-custom-fields" class="custom-fields-section"></div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Guardar cambios</button>
             <button type="button" id="btn-cancelar-editar" class="btn btn-secondary">Cancelar</button>

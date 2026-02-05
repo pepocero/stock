@@ -61,6 +61,84 @@ export async function handleRecambios(request, env, url) {
   return error('Método no permitido', 405);
 }
 
+export async function handleRecambioUtilizar(request, env, id) {
+  const method = request.method;
+  const recambioId = parseInt(id);
+  if (isNaN(recambioId)) return error('ID inválido', 400);
+
+  if (method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+  }
+
+  const authResult = authMiddleware(request, env);
+  if (authResult) return authResult;
+  if (!hasPermission('write', {})) return error('No autorizado', 403);
+  if (method !== 'POST') return error('Método no permitido', 405);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return error('JSON inválido');
+  }
+
+  const result = await recambiosService.registrarUtilizado(env.DB, recambioId, {
+    fecha: body.fecha,
+    cantidad: body.cantidad
+  });
+  if (!result.success) {
+    return error(result.errors.join('; '), 400);
+  }
+  return json({ ok: true });
+}
+
+export async function handleRecambioRecuperar(request, env, id) {
+  const method = request.method;
+  const recambioId = parseInt(id);
+  if (isNaN(recambioId)) return error('ID inválido', 400);
+
+  if (method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+  }
+
+  const authResult = authMiddleware(request, env);
+  if (authResult) return authResult;
+  if (!hasPermission('write', {})) return error('No autorizado', 403);
+  if (method !== 'POST') return error('Método no permitido', 405);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return error('JSON inválido');
+  }
+
+  const result = await recambiosService.registrarRecuperado(env.DB, recambioId, {
+    fecha: body.fecha,
+    cantidad: body.cantidad
+  });
+  if (!result.success) {
+    return error(result.errors.join('; '), 400);
+  }
+  return json({ ok: true });
+}
+
 export async function handleRecambiosImport(request, env) {
   const method = request.method;
 

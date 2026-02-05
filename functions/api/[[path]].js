@@ -4,8 +4,11 @@
  * params.path = "recambios" | "recambios/1" | "custom-fields" | "custom-fields/1"
  */
 
-import { handleRecambios, handleRecambiosImport, handleRecambiosBatchDelete, handleRecambioById } from '../../src/routes/recambios.js';
+import { handleRecambios, handleRecambiosImport, handleRecambiosBatchDelete, handleRecambioById, handleRecambioUtilizar, handleRecambioRecuperar } from '../../src/routes/recambios.js';
+import { handleUtilizados } from '../../src/routes/utilizados.js';
+import { handleRecuperados } from '../../src/routes/recuperados.js';
 import { handleCustomFields, handleCustomFieldById } from '../../src/routes/custom-fields.js';
+import { handleFabricantes, handleFabricanteById } from '../../src/routes/fabricantes.js';
 import { error, corsPreflight } from '../../src/utils/response.js';
 
 export async function onRequest(context) {
@@ -36,6 +39,12 @@ export async function onRequest(context) {
       if (parts.length === 2 && parts[1] === 'batch-delete') {
         return await handleRecambiosBatchDelete(request, env);
       }
+      if (parts.length === 3 && parts[2] === 'utilizar') {
+        return await handleRecambioUtilizar(request, env, parts[1]);
+      }
+      if (parts.length === 3 && parts[2] === 'recuperar') {
+        return await handleRecambioRecuperar(request, env, parts[1]);
+      }
       if (parts.length === 2) {
         return await handleRecambioById(request, env, url, parts[1]);
       }
@@ -44,6 +53,19 @@ export async function onRequest(context) {
     if (parts[0] === 'custom-fields') {
       if (parts.length === 1) return await handleCustomFields(request, env);
       if (parts.length === 2) return await handleCustomFieldById(request, env, parts[1]);
+    }
+
+    if (parts[0] === 'fabricantes') {
+      if (parts.length === 1) return await handleFabricantes(request, env);
+      if (parts.length === 2) return await handleFabricanteById(request, env, parts[1]);
+    }
+
+    if (parts[0] === 'utilizados' && parts.length === 1) {
+      return await handleUtilizados(request, env);
+    }
+
+    if (parts[0] === 'recuperados' && parts.length === 1) {
+      return await handleRecuperados(request, env);
     }
 
     return error('Ruta no encontrada', 404);

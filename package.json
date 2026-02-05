@@ -9,7 +9,9 @@
     "deploy": "wrangler pages deploy public",
     "db:create": "wrangler d1 create stock-db",
     "db:migrate": "wrangler d1 execute stock-db --remote --file=./schema.sql",
-    "db:migrate:local": "wrangler d1 execute stock-db --local --file=./schema.sql"
+    "db:migrate:local": "wrangler d1 execute stock-db --local --file=./schema.sql",
+    "db:migrate:004": "wrangler d1 execute stock-db --local --file=./migrations/004_utilizados_recuperados.sql",
+    "db:migrate:005": "wrangler d1 execute stock-db --local --file=./migrations/005_recambios_old_to_new.sql"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"

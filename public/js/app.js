@@ -6,7 +6,9 @@
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
 
-let customFieldsDefinitions = [];
+let fabricantesList = [];
+let utilizadosData = [];
+let recuperadosData = [];
 
 // =============================================================================
 // Tema (oscuro / claro)
@@ -74,7 +76,12 @@ async function api(endpoint, options = {}) {
     config.body = JSON.stringify(config.body);
   }
   const res = await fetch(url, config);
-  const data = res.ok ? await res.json().catch(() => ({})) : null;
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
   if (!res.ok) {
     const err = data?.error || `Error ${res.status}`;
     throw new Error(err);
@@ -120,9 +127,13 @@ function showDetallePanel(show = true) {
 async function loadRecambios() {
   const fabricante = document.getElementById('filter-fabricante').value;
   const search = document.getElementById('filter-search').value.trim();
+  const sortVal = document.getElementById('filter-sort')?.value || 'nombre-asc';
+  const [sortBy, sortOrder] = sortVal.split('-');
   const params = new URLSearchParams();
   if (fabricante) params.set('fabricante', fabricante);
   if (search) params.set('search', search);
+  params.set('sortBy', sortBy);
+  params.set('sortOrder', sortOrder);
 
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
@@ -131,7 +142,7 @@ async function loadRecambios() {
     const recambios = await api(`/recambios?${params}`);
     renderTable(recambios, tbody);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" class="error-msg">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="error-msg">${err.message}</td></tr>`;
   }
 }
 
@@ -156,10 +167,9 @@ function renderTable(recambios, tbody) {
         <td class="col-checkbox" onclick="event.stopPropagation()">
           <input type="checkbox" class="recambio-checkbox" data-id="${r.id}" aria-label="Seleccionar recambio ${r.id}">
         </td>
+        <td>${escapeHtml(r.codigo)}</td>
+        <td>${escapeHtml(r.nombre)}</td>
         <td>${escapeHtml(r.fabricante)}</td>
-        <td>${escapeHtml(r.codigo_interno)}</td>
-        <td>${escapeHtml(r.nombre_tecnico)}</td>
-        <td>${escapeHtml(r.alias)}</td>
         <td class="col-cantidad"><span class="${badgeClass}">${r.cantidad}</span></td>
         <td></td>
       </tr>
@@ -232,62 +242,22 @@ async function eliminarSeleccionados() {
 // Formulario nuevo
 // =============================================================================
 
-async function loadCustomFieldsForForm(containerId, values = {}) {
-  const container = document.getElementById(containerId);
-  if (!customFieldsDefinitions.length) {
-    container.innerHTML = '';
-    return;
-  }
-
-  container.innerHTML = '<h4 style="margin:0 0 0.75rem; font-size:0.95rem; color:var(--text-muted)">Campos personalizados</h4>';
-  for (const def of customFieldsDefinitions) {
-    const val = values[def.field_key]?.value ?? '';
-    const div = document.createElement('div');
-    div.className = 'field';
-    let input = '';
-    if (def.field_type === 'boolean') {
-      input = `<input type="checkbox" id="cf-${containerId}-${def.field_key}" data-field="${def.field_key}" ${val ? 'checked' : ''}>`;
-    } else {
-      const type = def.field_type === 'number' ? 'number' : def.field_type === 'date' ? 'date' : 'text';
-      input = `<input type="${type}" id="cf-${containerId}-${def.field_key}" data-field="${def.field_key}" value="${escapeHtml(val)}" placeholder="${escapeHtml(def.field_label)}">`;
-    }
-    div.innerHTML = `<label for="cf-${containerId}-${def.field_key}">${escapeHtml(def.field_label)}</label>${input}`;
-    container.appendChild(div);
-  }
-}
-
-function getCustomFieldsFromForm(containerId) {
-  const inputs = document.querySelectorAll(`#${containerId} [data-field]`);
-  const obj = {};
-  inputs.forEach(inp => {
-    const key = inp.dataset.field;
-    const val = inp.type === 'checkbox' ? (inp.checked ? '1' : '0') : inp.value;
-    obj[key] = val;
-  });
-  return obj;
-}
-
 async function submitNuevo(e) {
   e.preventDefault();
   const btn = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
 
   const data = {
+    codigo: document.getElementById('nuevo-codigo').value.trim(),
+    nombre: document.getElementById('nuevo-nombre').value.trim(),
     fabricante: document.getElementById('nuevo-fabricante').value,
-    codigo_interno: document.getElementById('nuevo-codigo-interno').value.trim(),
-    codigo_fabricante: document.getElementById('nuevo-codigo-fabricante').value.trim(),
-    nombre_tecnico: document.getElementById('nuevo-nombre-tecnico').value.trim(),
-    alias: document.getElementById('nuevo-alias').value.trim(),
-    cantidad: parseInt(document.getElementById('nuevo-cantidad').value) || 0,
-    observaciones: document.getElementById('nuevo-observaciones').value.trim() || null,
-    custom_fields: getCustomFieldsFromForm('nuevo-custom-fields')
+    cantidad: parseInt(document.getElementById('nuevo-cantidad').value) || 0
   };
 
   try {
     await api('/recambios', { method: 'POST', body: data });
     showFeedback('Recambio creado correctamente', 'success');
     e.target.reset();
-    loadCustomFieldsForForm('nuevo-custom-fields');
     loadRecambios();
     showView('listado');
   } catch (err) {
@@ -304,60 +274,101 @@ async function submitNuevo(e) {
 async function openDetalle(id) {
   try {
     const recambio = await api(`/recambios/${id}`);
-    const container = document.getElementById('detalle-content');
+    const infoEl = document.getElementById('detalle-info');
     const stockBajo = recambio.cantidad < STOCK_BAJO_UMBRAL;
 
-    let customHtml = '';
-    if (customFieldsDefinitions.length > 0) {
-      customHtml = '<div class="detalle-section-title">Campos adicionales</div>';
-      for (const def of customFieldsDefinitions) {
-        const obj = recambio.custom_fields?.[def.field_key];
-        const label = def.field_label;
-        let val = obj?.value ?? '';
-        if (def.field_type === 'boolean') val = val === '1' || val === true ? 'Sí' : 'No';
-        customHtml += `
-          <div class="detalle-item">
-            <span class="detalle-label">${escapeHtml(label)}</span>
-            <span class="detalle-value ${!val ? 'empty' : ''}">${escapeHtml(String(val)) || '—'}</span>
-          </div>`;
-      }
-    }
+    const hoy = new Date().toISOString().slice(0, 10);
+    document.getElementById('detalle-fecha-utilizado').value = hoy;
+    document.getElementById('detalle-fecha-recuperado').value = hoy;
+    document.getElementById('detalle-cantidad-utilizado').value = '1';
+    document.getElementById('detalle-cantidad-recuperado').value = '1';
 
-    container.innerHTML = `
+    infoEl.innerHTML = `
+      <div class="detalle-section-title">Datos del recambio</div>
+      <div class="detalle-item">
+        <span class="detalle-label">Código</span>
+        <span class="detalle-value">${escapeHtml(recambio.codigo)}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="detalle-label">Nombre</span>
+        <span class="detalle-value">${escapeHtml(recambio.nombre) || '—'}</span>
+      </div>
       <div class="detalle-item">
         <span class="detalle-label">Fabricante</span>
         <span class="detalle-value">${escapeHtml(recambio.fabricante)}</span>
       </div>
       <div class="detalle-item">
-        <span class="detalle-label">Código interno</span>
-        <span class="detalle-value">${escapeHtml(recambio.codigo_interno)}</span>
-      </div>
-      <div class="detalle-item">
-        <span class="detalle-label">Código fabricante</span>
-        <span class="detalle-value ${!recambio.codigo_fabricante ? 'empty' : ''}">${escapeHtml(recambio.codigo_fabricante) || '—'}</span>
-      </div>
-      <div class="detalle-item">
-        <span class="detalle-label">Nombre técnico</span>
-        <span class="detalle-value ${!recambio.nombre_tecnico ? 'empty' : ''}">${escapeHtml(recambio.nombre_tecnico) || '—'}</span>
-      </div>
-      <div class="detalle-item">
-        <span class="detalle-label">Alias</span>
-        <span class="detalle-value ${!recambio.alias ? 'empty' : ''}">${escapeHtml(recambio.alias) || '—'}</span>
-      </div>
-      <div class="detalle-item">
         <span class="detalle-label">Stock</span>
-        <span class="detalle-value"><span class="badge-stock ${stockBajo ? 'badge-stock-bajo' : ''}">${recambio.cantidad}</span></span>
+        <span class="detalle-value"><span class="badge-stock ${stockBajo ? 'badge-stock-bajo' : ''}" id="detalle-stock-badge">${recambio.cantidad}</span></span>
       </div>
-      <div class="detalle-item">
-        <span class="detalle-label">Observaciones</span>
-        <span class="detalle-value ${!recambio.observaciones ? 'empty' : ''}">${escapeHtml(recambio.observaciones) || '—'}</span>
-      </div>
-      ${customHtml}
     `;
 
     document.getElementById('btn-editar-desde-detalle').dataset.id = recambio.id;
     document.getElementById('btn-eliminar-desde-detalle').dataset.id = recambio.id;
+    document.getElementById('btn-check-utilizado').dataset.id = recambio.id;
+    document.getElementById('btn-check-recuperado').dataset.id = recambio.id;
     showDetallePanel(true);
+  } catch (err) {
+    showFeedback(err.message, 'error');
+  }
+}
+
+function fechaToYYYYMMDD(val) {
+  if (!val || typeof val !== 'string') return new Date().toISOString().slice(0, 10);
+  const trimmed = val.trim();
+  if (!trimmed) return new Date().toISOString().slice(0, 10);
+  const matchDDMM = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (matchDDMM) {
+    const [, d, m, y] = matchDDMM;
+    const pad = n => String(n).padStart(2, '0');
+    return `${y}-${pad(m)}-${pad(d)}`;
+  }
+  const matchYYYY = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (matchYYYY) return trimmed;
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function registrarUtilizado() {
+  const id = document.getElementById('btn-check-utilizado').dataset.id;
+  if (!id) return;
+  const fechaInput = document.getElementById('detalle-fecha-utilizado').value;
+  const fecha = fechaToYYYYMMDD(fechaInput);
+  const cantidad = parseInt(document.getElementById('detalle-cantidad-utilizado').value) || 1;
+  if (cantidad < 1) {
+    showFeedback('Selecciona una cantidad mayor a 0', 'error');
+    return;
+  }
+  try {
+    await api(`/recambios/${id}/utilizar`, { method: 'POST', body: { fecha, cantidad } });
+    showFeedback('Uso registrado correctamente', 'success');
+    const recambio = await api(`/recambios/${id}`);
+    const badge = document.getElementById('detalle-stock-badge');
+    if (badge) badge.textContent = recambio.cantidad;
+    badge?.classList.toggle('badge-stock-bajo', recambio.cantidad < STOCK_BAJO_UMBRAL);
+    loadRecambios();
+  } catch (err) {
+    showFeedback(err.message, 'error');
+  }
+}
+
+async function registrarRecuperado() {
+  const id = document.getElementById('btn-check-recuperado').dataset.id;
+  if (!id) return;
+  const fechaInput = document.getElementById('detalle-fecha-recuperado').value;
+  const fecha = fechaToYYYYMMDD(fechaInput);
+  const cantidad = parseInt(document.getElementById('detalle-cantidad-recuperado').value) || 1;
+  if (cantidad < 1) {
+    showFeedback('Selecciona una cantidad mayor a 0', 'error');
+    return;
+  }
+  try {
+    await api(`/recambios/${id}/recuperar`, { method: 'POST', body: { fecha, cantidad } });
+    showFeedback('Recepción registrada correctamente', 'success');
+    const recambio = await api(`/recambios/${id}`);
+    const badge = document.getElementById('detalle-stock-badge');
+    if (badge) badge.textContent = recambio.cantidad;
+    badge?.classList.toggle('badge-stock-bajo', recambio.cantidad < STOCK_BAJO_UMBRAL);
+    loadRecambios();
   } catch (err) {
     showFeedback(err.message, 'error');
   }
@@ -386,21 +397,14 @@ async function openEditar(id) {
   try {
     const recambio = await api(`/recambios/${id}`);
     document.getElementById('editar-id').value = recambio.id;
+    document.getElementById('editar-codigo').value = recambio.codigo;
+    document.getElementById('editar-nombre').value = recambio.nombre || '';
     document.getElementById('editar-fabricante').value = recambio.fabricante;
-    document.getElementById('editar-codigo-interno').value = recambio.codigo_interno;
-    document.getElementById('editar-codigo-fabricante').value = recambio.codigo_fabricante || '';
-    document.getElementById('editar-nombre-tecnico').value = recambio.nombre_tecnico || '';
-    document.getElementById('editar-alias').value = recambio.alias || '';
-    document.getElementById('editar-cantidad').value = recambio.cantidad;
-    document.getElementById('editar-observaciones').value = recambio.observaciones || '';
+    const cantidad = Math.max(0, parseInt(recambio.cantidad) || 0);
+    const cantidadSelect = document.getElementById('editar-cantidad');
+    cantidadSelect.value = String(Math.min(8, cantidad));
 
-    const customValues = {};
-    for (const [k, v] of Object.entries(recambio.custom_fields || {})) {
-      customValues[k] = v;
-    }
-    await loadCustomFieldsForForm('editar-custom-fields', customValues);
-
-    updateStockBajoBadge(recambio.cantidad);
+    updateStockBajoBadge(parseInt(cantidadSelect.value) || 0);
     showEditarPanel(true);
   } catch (err) {
     showFeedback(err.message, 'error');
@@ -423,14 +427,10 @@ async function submitEditar(e) {
   btn.disabled = true;
 
   const data = {
+    codigo: document.getElementById('editar-codigo').value.trim(),
+    nombre: document.getElementById('editar-nombre').value.trim(),
     fabricante: document.getElementById('editar-fabricante').value,
-    codigo_interno: document.getElementById('editar-codigo-interno').value.trim(),
-    codigo_fabricante: document.getElementById('editar-codigo-fabricante').value.trim(),
-    nombre_tecnico: document.getElementById('editar-nombre-tecnico').value.trim(),
-    alias: document.getElementById('editar-alias').value.trim(),
-    cantidad: parseInt(document.getElementById('editar-cantidad').value) || 0,
-    observaciones: document.getElementById('editar-observaciones').value.trim() || null,
-    custom_fields: getCustomFieldsFromForm('editar-custom-fields')
+    cantidad: Math.max(0, parseInt(document.getElementById('editar-cantidad').value) || 0)
   };
 
   try {
@@ -449,6 +449,14 @@ async function submitEditar(e) {
 // Utilidades
 // =============================================================================
 
+function formatDateDDMMYYYY(fechaStr) {
+  if (!fechaStr) return '';
+  const [y, m, d] = String(fechaStr).split(/[-/]/);
+  if (!y || !m || !d) return fechaStr;
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d)}/${pad(m)}/${y}`;
+}
+
 function escapeHtml(str) {
   if (str == null) return '';
   const div = document.createElement('div');
@@ -457,45 +465,76 @@ function escapeHtml(str) {
 }
 
 function showFeedback(msg, type) {
-  const existing = document.querySelector('.feedback-msg');
+  const existing = document.querySelector('.toast-msg');
   if (existing) existing.remove();
   const el = document.createElement('div');
-  el.className = `feedback-msg ${type === 'success' ? 'success-msg' : 'error-msg'}`;
+  el.className = `toast-msg toast-${type === 'success' ? 'success' : 'error'}`;
   el.textContent = msg;
-  document.querySelector('.content').insertBefore(el, document.querySelector('.content').firstChild);
-  setTimeout(() => el.remove(), 4000);
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  document.body.appendChild(el);
+  el.offsetHeight;
+  el.classList.add('toast-visible');
+  setTimeout(() => {
+    el.classList.remove('toast-visible');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
 }
 
 // =============================================================================
-// Campos adicionales (editar nombres)
+// Fabricantes
 // =============================================================================
 
-async function loadCamposView() {
-  const container = document.getElementById('campos-lista');
-  if (!customFieldsDefinitions.length) {
-    container.innerHTML = '<p class="empty-state">No hay campos adicionales. Añade el primero abajo.</p>';
+function populateFabricanteSelects() {
+  const options = fabricantesList.map(f => `<option value="${escapeHtml(f.nombre)}">${escapeHtml(f.nombre)}</option>`).join('');
+  const filterSelect = document.getElementById('filter-fabricante');
+  if (filterSelect) {
+    const currentVal = filterSelect.value;
+    filterSelect.innerHTML = '<option value="">Todos los fabricantes</option>' + options;
+    if (fabricantesList.some(f => f.nombre === currentVal)) filterSelect.value = currentVal;
+  }
+  const nuevoSelect = document.getElementById('nuevo-fabricante');
+  if (nuevoSelect) {
+    nuevoSelect.innerHTML = '<option value="">Seleccionar...</option>' + options;
+  }
+  const editarSelect = document.getElementById('editar-fabricante');
+  if (editarSelect) {
+    const currentVal = editarSelect.value;
+    editarSelect.innerHTML = options;
+    if (fabricantesList.some(f => f.nombre === currentVal)) editarSelect.value = currentVal;
+  }
+}
+
+async function loadFabricantesView() {
+  const container = document.getElementById('fabricantes-lista');
+  if (!fabricantesList.length) {
+    container.innerHTML = '<p class="empty-state">No hay fabricantes. Añade el primero abajo.</p>';
     return;
   }
 
-  container.innerHTML = customFieldsDefinitions.map(def => `
-    <div class="campo-item" data-id="${def.id}">
-      <input type="text" value="${escapeHtml(def.field_label)}" data-field-id="${def.id}" placeholder="Nombre del campo">
-      <button type="button" class="btn-sm btn-edit btn-save-campo" data-id="${def.id}">Guardar</button>
+  container.innerHTML = fabricantesList.map(f => `
+    <div class="campo-item" data-id="${f.id}">
+      <input type="text" value="${escapeHtml(f.nombre)}" data-fabricante-id="${f.id}" placeholder="Nombre del fabricante">
+      <button type="button" class="btn-sm btn-edit btn-save-fabricante" data-id="${f.id}">Guardar</button>
+      <button type="button" class="btn-sm btn-danger btn-delete-fabricante" data-id="${f.id}" title="Eliminar">🗑</button>
     </div>
   `).join('');
 
-  container.querySelectorAll('.btn-save-campo').forEach(btn => {
-    btn.addEventListener('click', () => saveCampoNombre(parseInt(btn.dataset.id)));
+  container.querySelectorAll('.btn-save-fabricante').forEach(btn => {
+    btn.addEventListener('click', () => saveFabricanteNombre(parseInt(btn.dataset.id)));
+  });
+  container.querySelectorAll('.btn-delete-fabricante').forEach(btn => {
+    btn.addEventListener('click', () => deleteFabricante(parseInt(btn.dataset.id)));
   });
   container.querySelectorAll('.campo-item input').forEach(inp => {
     inp.addEventListener('keypress', e => {
-      if (e.key === 'Enter') saveCampoNombre(parseInt(inp.dataset.fieldId));
+      if (e.key === 'Enter') saveFabricanteNombre(parseInt(inp.dataset.fabricanteId));
     });
   });
 }
 
-async function saveCampoNombre(id) {
-  const item = document.querySelector(`.campo-item[data-id="${id}"]`);
+async function saveFabricanteNombre(id) {
+  const item = document.querySelector(`#fabricantes-lista .campo-item[data-id="${id}"]`);
   const input = item?.querySelector('input');
   if (!input) return;
   const nuevoNombre = input.value.trim();
@@ -504,46 +543,50 @@ async function saveCampoNombre(id) {
     return;
   }
   try {
-    await api(`/custom-fields/${id}`, { method: 'PUT', body: { field_label: nuevoNombre } });
-    showFeedback('Nombre actualizado', 'success');
-    await refreshCustomFields();
+    await api(`/fabricantes/${id}`, { method: 'PUT', body: { nombre: nuevoNombre } });
+    showFeedback('Fabricante actualizado', 'success');
+    await refreshFabricantes();
   } catch (err) {
     showFeedback(err.message, 'error');
   }
 }
 
-async function addNuevoCampo() {
-  const input = document.getElementById('nuevo-campo-nombre');
+async function deleteFabricante(id) {
+  if (!confirm('¿Eliminar este fabricante? Los recambios con este fabricante quedarán con un valor no válido.')) return;
+  try {
+    await api(`/fabricantes/${id}`, { method: 'DELETE' });
+    showFeedback('Fabricante eliminado', 'success');
+    await refreshFabricantes();
+  } catch (err) {
+    showFeedback(err.message, 'error');
+  }
+}
+
+async function addFabricante() {
+  const input = document.getElementById('nuevo-fabricante-nombre');
   const nombre = input.value.trim();
   if (!nombre) {
-    showFeedback('Escribe el nombre del campo', 'error');
-    return;
-  }
-  const fieldKey = nombre.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-  if (!fieldKey) {
-    showFeedback('El nombre debe contener letras o números', 'error');
+    showFeedback('Escribe el nombre del fabricante', 'error');
     return;
   }
   try {
-    await api('/custom-fields', {
-      method: 'POST',
-      body: { field_key: fieldKey, field_label: nombre }
-    });
-    showFeedback('Campo añadido', 'success');
+    await api('/fabricantes', { method: 'POST', body: { nombre } });
+    showFeedback('Fabricante añadido', 'success');
     input.value = '';
-    await refreshCustomFields();
+    await refreshFabricantes();
   } catch (err) {
     showFeedback(err.message, 'error');
   }
 }
 
-async function refreshCustomFields() {
-  customFieldsDefinitions = await api('/custom-fields');
-  loadCustomFieldsForForm('nuevo-custom-fields');
-  loadCamposView();
+async function refreshFabricantes() {
+  fabricantesList = await api('/fabricantes');
+  populateFabricanteSelects();
+  loadFabricantesView();
+  loadRecambios();
   const editarPanel = document.getElementById('view-editar');
-  if (editarPanel.classList.contains('active')) {
-    const id = document.getElementById('editar-id').value;
+  if (editarPanel?.classList.contains('active')) {
+    const id = document.getElementById('editar-id')?.value;
     if (id) openEditar(parseInt(id));
   }
 }
@@ -553,13 +596,10 @@ async function refreshCustomFields() {
 // =============================================================================
 
 const IMPORT_FIELDS = [
+  { key: 'codigo', label: 'Código' },
+  { key: 'nombre', label: 'Nombre' },
   { key: 'fabricante', label: 'Fabricante' },
-  { key: 'codigo_interno', label: 'Código interno' },
-  { key: 'codigo_fabricante', label: 'Código fabricante' },
-  { key: 'nombre_tecnico', label: 'Nombre técnico' },
-  { key: 'alias', label: 'Alias' },
-  { key: 'cantidad', label: 'Stock' },
-  { key: 'observaciones', label: 'Observaciones' }
+  { key: 'cantidad', label: 'Stock' }
 ];
 
 let importData = { headers: [], rows: [], mapping: {} };
@@ -749,6 +789,163 @@ function resetImport() {
   document.getElementById('import-result').classList.add('hidden');
 }
 
+// =============================================================================
+// Recambios Utilizados y Recuperados
+// =============================================================================
+
+function groupByDate(items) {
+  const groups = {};
+  for (const item of items) {
+    const fecha = item.fecha || '';
+    if (!groups[fecha]) groups[fecha] = [];
+    groups[fecha].push(item);
+  }
+  return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+}
+
+function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
+  const container = document.getElementById(containerId);
+  if (!items.length) {
+    container.innerHTML = '<p class="empty-state">No hay registros.</p>';
+    return;
+  }
+
+  const groups = groupByDate(items);
+  container.innerHTML = groups.map(([fecha, registros]) => {
+    const fechaId = fecha.replace(/-/g, '');
+    const fechaLabel = formatDateDDMMYYYY(fecha);
+    const rows = registros.map(r => `
+      <tr>
+        <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
+        <td>${escapeHtml(r.codigo)}</td>
+        <td>${r.cantidad}</td>
+      </tr>
+    `).join('');
+    return `
+      <div class="registro-fecha-group" data-fecha="${fecha}">
+        <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
+          <span class="registro-fecha-toggle">▶</span>
+          <span class="registro-fecha-label">${escapeHtml(fechaLabel)}</span>
+          <span class="registro-fecha-count">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
+          <div class="registro-fecha-actions">
+            <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
+            <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
+          </div>
+        </div>
+        <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
+          <table class="data-table registro-table">
+            <thead><tr><th>Fecha</th><th>Código</th><th>Cantidad</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.registro-fecha-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.registro-fecha-actions')) return;
+      const fecha = header.dataset.fecha;
+      const fechaId = fecha.replace(/-/g, '');
+      const body = document.getElementById(`${tipo}-body-${fechaId}`);
+      const toggle = header.querySelector('.registro-fecha-toggle');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        toggle.textContent = '▼';
+      } else {
+        body.style.display = 'none';
+        toggle.textContent = '▶';
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-exportar-fecha').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportarRegistrosExcel(titulo, items.filter(i => i.fecha === btn.dataset.fecha));
+    });
+  });
+
+  container.querySelectorAll('.registro-fecha-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => updateExportarSeleccionadosBtn(tipo));
+  });
+}
+
+function updateExportarSeleccionadosBtn(tipo) {
+  const btn = document.getElementById(`btn-exportar-${tipo}-seleccionados`);
+  const checked = document.querySelectorAll(`.registro-fecha-checkbox[data-tipo="${tipo}"]:checked`);
+  if (btn) {
+    if (checked.length > 0) {
+      btn.classList.remove('hidden');
+      btn.textContent = `Exportar seleccionados (${checked.length})`;
+    } else {
+      btn.classList.add('hidden');
+    }
+  }
+}
+
+function exportarRegistrosExcel(titulo, items) {
+  if (typeof XLSX === 'undefined') {
+    showFeedback('Librería Excel no cargada', 'error');
+    return;
+  }
+  if (!items.length) {
+    showFeedback('No hay datos para exportar', 'error');
+    return;
+  }
+  const data = [
+    [titulo],
+    ['Fecha', 'Codigo', 'Cantidad'],
+    ...items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.cantidad])
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+  const filename = `${titulo.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  showFeedback('Exportado correctamente', 'success');
+}
+
+async function loadUtilizados() {
+  const container = document.getElementById('utilizados-list');
+  container.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    utilizadosData = await api('/utilizados');
+    renderRegistrosPorFecha('utilizados-list', utilizadosData, 'utilizados', 'Recambios Utilizados');
+    updateExportarSeleccionadosBtn('utilizados');
+  } catch (err) {
+    container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function loadRecuperados() {
+  const container = document.getElementById('recuperados-list');
+  container.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    recuperadosData = await api('/recuperados');
+    renderRegistrosPorFecha('recuperados-list', recuperadosData, 'recuperados', 'Recambios Recuperados');
+    updateExportarSeleccionadosBtn('recuperados');
+  } catch (err) {
+    container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function exportarUtilizadosSeleccionados() {
+  const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
+  const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
+  if (!fechas.size) return;
+  const items = utilizadosData.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+  exportarRegistrosExcel('Recambios Utilizados', items);
+}
+
+function exportarRecuperadosSeleccionados() {
+  const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="recuperados"]:checked');
+  const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
+  if (!fechas.size) return;
+  const items = recuperadosData.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+  exportarRegistrosExcel('Recambios Recuperados', items);
+}
+
 function handleImportFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -782,21 +979,25 @@ function handleImportFileSelect(e) {
 
 async function init() {
   try {
-    customFieldsDefinitions = await api('/custom-fields');
+    fabricantesList = await api('/fabricantes');
   } catch {
-    customFieldsDefinitions = [];
+    fabricantesList = [];
   }
 
-  loadCustomFieldsForForm('nuevo-custom-fields');
+  populateFabricanteSelects();
   loadRecambios();
-  loadCamposView();
 
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       showView(tab.dataset.view);
-      if (tab.dataset.view === 'campos') loadCamposView();
+      if (tab.dataset.view === 'fabricantes') loadFabricantesView();
+      if (tab.dataset.view === 'utilizados') loadUtilizados();
+      if (tab.dataset.view === 'recuperados') loadRecuperados();
     });
   });
+
+  document.getElementById('btn-exportar-utilizados-seleccionados')?.addEventListener('click', exportarUtilizadosSeleccionados);
+  document.getElementById('btn-exportar-recuperados-seleccionados')?.addEventListener('click', exportarRecuperadosSeleccionados);
 
   const importFileInput = document.getElementById('import-file');
   const btnSelectFile = document.getElementById('btn-select-file');
@@ -807,7 +1008,7 @@ async function init() {
   document.getElementById('btn-importar')?.addEventListener('click', doImport);
   document.getElementById('btn-import-reset')?.addEventListener('click', resetImport);
 
-  document.getElementById('btn-add-campo').addEventListener('click', addNuevoCampo);
+  document.getElementById('btn-add-fabricante')?.addEventListener('click', addFabricante);
 
   document.getElementById('form-nuevo').addEventListener('submit', submitNuevo);
   document.getElementById('form-editar').addEventListener('submit', submitEditar);
@@ -858,6 +1059,8 @@ async function init() {
   });
 
   document.getElementById('btn-eliminar-desde-detalle').addEventListener('click', eliminarRecambioDesdeDetalle);
+  document.getElementById('btn-check-utilizado').addEventListener('click', registrarUtilizado);
+  document.getElementById('btn-check-recuperado').addEventListener('click', registrarRecuperado);
 
   document.getElementById('btn-eliminar-seleccionados')?.addEventListener('click', eliminarSeleccionados);
 
@@ -866,7 +1069,7 @@ async function init() {
     btnCancelarEditar.addEventListener('click', () => showEditarPanel(false));
   }
 
-  document.getElementById('editar-cantidad').addEventListener('input', e => {
+  document.getElementById('editar-cantidad').addEventListener('change', e => {
     updateStockBajoBadge(parseInt(e.target.value) || 0);
   });
 }

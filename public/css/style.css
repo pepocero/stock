@@ -481,7 +481,43 @@ body {
   margin: 0 0 1rem;
 }
 
-/* Error message */
+/* Toast - optimizado para móviles/tablets */
+.toast-msg {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  min-width: 200px;
+  max-width: min(90vw, 360px);
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 10000;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.toast-msg.toast-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast-msg.toast-success {
+  background: var(--success);
+  color: #fff;
+}
+
+.toast-msg.toast-error {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Error message (legacy/inline) */
 .error-msg {
   background: rgba(234, 67, 53, 0.15);
   color: var(--danger);
@@ -490,7 +526,7 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Success feedback */
+/* Success feedback (legacy/inline) */
 .success-msg {
   background: rgba(52, 168, 83, 0.15);
   color: var(--success);
@@ -682,6 +718,67 @@ body {
   color: var(--text);
 }
 
+.utilizados-section .detalle-section-title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.detalle-accion-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.detalle-accion-row .input-fecha {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.detalle-accion-row .select-cantidad {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  min-width: 4rem;
+}
+
+.detalle-accion-row .btn-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--success);
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.detalle-accion-row .btn-check:hover {
+  background: #2d9d4a;
+  transform: scale(1.05);
+}
+
+.detalle-accion-row .btn-check:active {
+  transform: scale(0.98);
+}
+
 .detalle-label {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -715,6 +812,85 @@ body {
 }
 
 /* =============================================================================
+   Recambios Utilizados / Recuperados - listado por fecha
+   ============================================================================= */
+
+.registros-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.registros-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registros-por-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.registro-fecha-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.registro-fecha-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: var(--bg-input);
+  transition: background 0.2s;
+}
+
+.registro-fecha-header:hover {
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.registro-fecha-toggle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 1rem;
+}
+
+.registro-fecha-label {
+  font-weight: 600;
+  flex: 1;
+}
+
+.registro-fecha-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.registro-fecha-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registro-fecha-body {
+  padding: 0 1rem 1rem;
+}
+
+.registro-table {
+  margin-top: 0.5rem;
+}
+
+.registro-table th,
+.registro-table td {
+  padding: 0.5rem 0.75rem;
+}
+
+/* =============================================================================
    Tema claro (light)
    ============================================================================= */
 
@@ -740,18 +916,35 @@ body.theme-light {
 @media (max-width: 768px) {
   .app {
     padding: 1rem 0.75rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
   .tabs {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .data-table {
     min-width: 600px; /* permite scroll horizontal en pantallas estrechas */
+  }
+
+  .toast-msg {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .detalle-accion-row {
+    gap: 0.75rem;
+  }
+
+  .detalle-accion-row .input-fecha,
+  .detalle-accion-row .select-cantidad {
+    min-height: 44px;
+    font-size: 16px; /* evita zoom en iOS al enfocar */
   }
 
   .data-table th,
