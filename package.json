@@ -11,11 +11,20 @@
     "db:migrate": "wrangler d1 execute stock-db --remote --file=./schema.sql",
     "db:migrate:local": "wrangler d1 execute stock-db --local --file=./schema.sql",
     "db:migrate:004": "wrangler d1 execute stock-db --local --file=./migrations/004_utilizados_recuperados.sql",
-    "db:migrate:005": "wrangler d1 execute stock-db --local --file=./migrations/005_recambios_old_to_new.sql",
     "db:migrate:004:remote": "wrangler d1 execute stock-db --remote --file=./migrations/004_utilizados_recuperados.sql",
+    "db:migrate:005": "wrangler d1 execute stock-db --local --file=./migrations/005_recambios_old_to_new.sql",
     "db:migrate:005:remote": "wrangler d1 execute stock-db --remote --file=./migrations/005_recambios_old_to_new.sql",
     "db:migrate:006": "wrangler d1 execute stock-db --local --file=./migrations/006_add_alias.sql",
-    "db:migrate:006:remote": "wrangler d1 execute stock-db --remote --file=./migrations/006_add_alias.sql"
+    "db:migrate:006:remote": "wrangler d1 execute stock-db --remote --file=./migrations/006_add_alias.sql",
+    "db:migrate:007": "wrangler d1 execute stock-db --local --file=./migrations/007_utilizados_add_nombre.sql",
+    "db:migrate:007:remote": "wrangler d1 execute stock-db --remote --file=./migrations/007_utilizados_add_nombre.sql",
+    "db:migrate:008": "wrangler d1 execute stock-db --local --file=./migrations/008_utilizados_add_recuperado.sql",
+    "db:migrate:008:remote": "wrangler d1 execute stock-db --remote --file=./migrations/008_utilizados_add_recuperado.sql",
+    "db:migrate:009": "wrangler d1 execute stock-db --local --file=./migrations/009_recuperados_add_nombre_utilizado_id.sql",
+    "db:migrate:009:remote": "wrangler d1 execute stock-db --remote --file=./migrations/009_recuperados_add_nombre_utilizado_id.sql",
+    "db:migrate:010": "wrangler d1 execute stock-db --local --file=./migrations/010_utilizados_add_fecharecup.sql",
+    "db:migrate:010:remote": "wrangler d1 execute stock-db --remote --file=./migrations/010_utilizados_add_fecharecup.sql",
+    "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"

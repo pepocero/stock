@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.1.01';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -243,6 +243,15 @@ function initBackButtonBehavior() {
 // Vistas
 // =============================================================================
 
+const VIEW_TITLES = {
+  listado: 'Listado',
+  nuevo: 'Nuevo recambio',
+  importar: 'Importar',
+  fabricantes: 'Fabricantes',
+  utilizados: 'Recambios Utilizados',
+  campos: 'Campos adicionales'
+};
+
 function showView(viewId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -250,6 +259,8 @@ function showView(viewId) {
   const tab = document.querySelector(`[data-view="${viewId}"]`);
   if (view) view.classList.add('active');
   if (tab) tab.classList.add('active');
+  const titleEl = document.getElementById('content-title');
+  if (titleEl) titleEl.textContent = VIEW_TITLES[viewId] || viewId;
 }
 
 function showEditarPanel(show = true) {
@@ -431,9 +442,9 @@ async function openDetalle(id, pushState = true) {
 
     const hoy = new Date().toISOString().slice(0, 10);
     document.getElementById('detalle-fecha-utilizado').value = hoy;
-    document.getElementById('detalle-fecha-recuperado').value = hoy;
     document.getElementById('detalle-cantidad-utilizado').value = '1';
-    document.getElementById('detalle-cantidad-recuperado').value = '1';
+    const usadoCheck = document.getElementById('detalle-usado');
+    if (usadoCheck) usadoCheck.checked = false;
 
     infoEl.innerHTML = `
       <div class="detalle-section-title">Datos del recambio</div>
@@ -462,7 +473,6 @@ async function openDetalle(id, pushState = true) {
     document.getElementById('btn-editar-desde-detalle').dataset.id = recambio.id;
     document.getElementById('btn-eliminar-desde-detalle').dataset.id = recambio.id;
     document.getElementById('btn-check-utilizado').dataset.id = recambio.id;
-    document.getElementById('btn-check-recuperado').dataset.id = recambio.id;
     showDetallePanel(true);
     if (pushState !== false) pushHistoryState({ panel: 'detalle', id: recambio.id });
   } catch (err) {
@@ -500,8 +510,9 @@ async function registrarUtilizado() {
     showFeedback(`Stock insuficiente. Disponible: ${stockActual}`, 'error');
     return;
   }
+  const usado = document.getElementById('detalle-usado')?.checked || false;
   try {
-    await api(`/recambios/${id}/utilizar`, { method: 'POST', body: { fecha, cantidad } });
+    await api(`/recambios/${id}/utilizar`, { method: 'POST', body: { fecha, cantidad, usado } });
     const msg = cantidad === 1 ? 'El stock se ha disminuido en 1 unidad.' : `El stock se ha disminuido en ${cantidad} unidades.`;
     showModalNotificacion('Recambio Utilizado', msg);
     const recambio = await api(`/recambios/${id}`);
@@ -509,6 +520,7 @@ async function registrarUtilizado() {
     if (badge) badge.textContent = recambio.cantidad;
     badge?.classList.toggle('badge-stock-bajo', recambio.cantidad < STOCK_BAJO_UMBRAL);
     loadRecambios();
+    loadUtilizados();
   } catch (err) {
     showFeedback(err.message, 'error');
   }
@@ -567,7 +579,7 @@ async function openEditar(id, pushState = true) {
     document.getElementById('editar-alias').value = recambio.alias || '';
     const cantidad = Math.max(0, parseInt(recambio.cantidad) || 0);
     const cantidadSelect = document.getElementById('editar-cantidad');
-    cantidadSelect.value = String(Math.min(8, cantidad));
+    cantidadSelect.value = String(Math.min(20, cantidad));
 
     updateStockBajoBadge(parseInt(cantidadSelect.value) || 0);
     showEditarPanel(true);
@@ -998,13 +1010,26 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   container.innerHTML = groups.map(([fecha, registros]) => {
     const fechaId = fecha.replace(/-/g, '');
     const fechaLabel = formatDateDDMMYYYY(fecha);
-    const rows = registros.map(r => `
-      <tr>
+    const rows = registros.map(r => {
+      const recup = r.recuperado || 'Pendiente';
+      const fecharecup = r.fecharecup ? formatDateDDMMYYYY(r.fecharecup) : '-';
+      return `
+      <tr data-id="${r.id}">
         <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
         <td>${escapeHtml(r.codigo)}</td>
+        <td>${escapeHtml(r.nombre || '')}</td>
         <td>${r.cantidad}</td>
+        <td>
+          <select class="select-recuperado" data-id="${r.id}" title="Estado de recuperación">
+            <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+            <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
+          </select>
+        </td>
+        <td>${escapeHtml(fecharecup)}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+    const thead = '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>';
     return `
       <div class="registro-fecha-group" data-fecha="${fecha}">
         <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
@@ -1018,7 +1043,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
         </div>
         <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
           <table class="data-table registro-table">
-            <thead><tr><th>Fecha</th><th>Código</th><th>Cantidad</th></tr></thead>
+            ${thead}
             <tbody>${rows}</tbody>
           </table>
         </div>
@@ -1046,12 +1071,40 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   container.querySelectorAll('.btn-exportar-fecha').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      exportarRegistrosExcel(titulo, items.filter(i => i.fecha === btn.dataset.fecha));
+      const itemsFecha = items.filter(i => i.fecha === btn.dataset.fecha);
+      exportarRegistrosExcel(titulo, itemsFecha, 'utilizados');
     });
   });
 
   container.querySelectorAll('.registro-fecha-checkbox').forEach(cb => {
     cb.addEventListener('change', () => updateExportarSeleccionadosBtn(tipo));
+  });
+
+  container.querySelectorAll('.select-recuperado').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const id = parseInt(e.target.dataset.id);
+      const valor = e.target.value;
+      const prevVal = utilizadosData.find(u => u.id === id)?.recuperado || 'Pendiente';
+      try {
+        await api(`/utilizados/${id}`, { method: 'PATCH', body: { recuperado: valor } });
+        const item = utilizadosData.find(u => u.id === id);
+        if (item) {
+          item.recuperado = valor;
+          item.fecharecup = valor === 'Recuperado' ? new Date().toISOString().slice(0, 10) : null;
+        }
+        showFeedback(valor === 'Recuperado' ? 'Marcado como Recuperado' : 'Marcado como Pendiente', 'success');
+        const row = container.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+          const fecharecupCell = row.querySelector('td:last-child');
+          if (fecharecupCell) {
+            fecharecupCell.textContent = item?.fecharecup ? formatDateDDMMYYYY(item.fecharecup) : '-';
+          }
+        }
+      } catch (err) {
+        showFeedback(err.message, 'error');
+        e.target.value = prevVal;
+      }
+    });
   });
 }
 
@@ -1078,7 +1131,7 @@ function updateExportarSeleccionadosBtn(tipo) {
   }
 }
 
-function exportarRegistrosExcel(titulo, items) {
+function exportarRegistrosExcel(titulo, items, tipo = '') {
   if (typeof XLSX === 'undefined') {
     showFeedback('Librería Excel no cargada', 'error');
     return;
@@ -1087,11 +1140,12 @@ function exportarRegistrosExcel(titulo, items) {
     showFeedback('No hay datos para exportar', 'error');
     return;
   }
-  const data = [
-    [titulo],
-    ['Fecha', 'Codigo', 'Cantidad'],
-    ...items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.cantidad])
-  ];
+  const isUtilizados = tipo === 'utilizados';
+  const headers = isUtilizados ? ['Fecha', 'Codigo', 'Nombre', 'Cantidad', 'Recuperado', 'Fecha Recup.'] : ['Fecha', 'Codigo', 'Nombre', 'Cantidad'];
+  const rows = isUtilizados
+    ? items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''])
+    : items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.cantidad]);
+  const data = [[titulo], headers, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Registros');
@@ -1100,25 +1154,31 @@ function exportarRegistrosExcel(titulo, items) {
   showFeedback('Exportado correctamente', 'success');
 }
 
+function filterUtilizadosPorBusqueda(items, searchTerm) {
+  if (!searchTerm || !searchTerm.trim()) return items;
+  const term = searchTerm.trim().toLowerCase();
+  return items.filter(r => {
+    const fechaDDMM = formatDateDDMMYYYY(r.fecha).toLowerCase();
+    const fechaYYYY = (r.fecha || '').toLowerCase();
+    const nombre = (r.nombre || '').toLowerCase();
+    const codigo = (r.codigo || '').toLowerCase();
+    return fechaDDMM.includes(term) || fechaYYYY.includes(term) || nombre.includes(term) || codigo.includes(term);
+  });
+}
+
+function renderUtilizadosView() {
+  const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
+  const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
+  renderRegistrosPorFecha('utilizados-list', filtered, 'utilizados', 'Recambios Utilizados');
+  updateExportarSeleccionadosBtn('utilizados');
+}
+
 async function loadUtilizados() {
   const container = document.getElementById('utilizados-list');
   container.innerHTML = '<p class="loading">Cargando...</p>';
   try {
     utilizadosData = await api('/utilizados');
-    renderRegistrosPorFecha('utilizados-list', utilizadosData, 'utilizados', 'Recambios Utilizados');
-    updateExportarSeleccionadosBtn('utilizados');
-  } catch (err) {
-    container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
-  }
-}
-
-async function loadRecuperados() {
-  const container = document.getElementById('recuperados-list');
-  container.innerHTML = '<p class="loading">Cargando...</p>';
-  try {
-    recuperadosData = await api('/recuperados');
-    renderRegistrosPorFecha('recuperados-list', recuperadosData, 'recuperados', 'Recambios Recuperados');
-    updateExportarSeleccionadosBtn('recuperados');
+    renderUtilizadosView();
   } catch (err) {
     container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
   }
@@ -1128,16 +1188,10 @@ function exportarUtilizadosSeleccionados() {
   const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
   const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
   if (!fechas.size) return;
-  const items = utilizadosData.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
-  exportarRegistrosExcel('Recambios Utilizados', items);
-}
-
-function exportarRecuperadosSeleccionados() {
-  const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="recuperados"]:checked');
-  const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
-  if (!fechas.size) return;
-  const items = recuperadosData.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
-  exportarRegistrosExcel('Recambios Recuperados', items);
+  const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
+  const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
+  const items = filtered.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+  exportarRegistrosExcel('Recambios Utilizados', items, 'utilizados');
 }
 
 async function borrarUtilizadosSeleccionados() {
@@ -1214,14 +1268,26 @@ async function init() {
       showView(tab.dataset.view);
       if (tab.dataset.view === 'fabricantes') loadFabricantesView();
       if (tab.dataset.view === 'utilizados') loadUtilizados();
-      if (tab.dataset.view === 'recuperados') loadRecuperados();
     });
   });
 
   document.getElementById('btn-exportar-utilizados-seleccionados')?.addEventListener('click', exportarUtilizadosSeleccionados);
-  document.getElementById('btn-exportar-recuperados-seleccionados')?.addEventListener('click', exportarRecuperadosSeleccionados);
   document.getElementById('btn-borrar-utilizados-seleccionados')?.addEventListener('click', borrarUtilizadosSeleccionados);
-  document.getElementById('btn-borrar-recuperados-seleccionados')?.addEventListener('click', borrarRecuperadosSeleccionados);
+
+  const filterUtilizados = document.getElementById('filter-utilizados');
+  if (filterUtilizados) {
+    let utilizadosSearchDebounce;
+    filterUtilizados.addEventListener('input', () => {
+      clearTimeout(utilizadosSearchDebounce);
+      utilizadosSearchDebounce = setTimeout(renderUtilizadosView, 150);
+    });
+    filterUtilizados.addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        renderUtilizadosView();
+      }
+    });
+  }
 
   const importFileInput = document.getElementById('import-file');
   const btnSelectFile = document.getElementById('btn-select-file');
@@ -1295,7 +1361,6 @@ async function init() {
 
   document.getElementById('btn-eliminar-desde-detalle').addEventListener('click', eliminarRecambioDesdeDetalle);
   document.getElementById('btn-check-utilizado').addEventListener('click', registrarUtilizado);
-  document.getElementById('btn-check-recuperado').addEventListener('click', registrarRecuperado);
 
   document.getElementById('btn-eliminar-seleccionados')?.addEventListener('click', eliminarSeleccionados);
 

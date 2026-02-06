@@ -113,6 +113,7 @@ body {
 }
 
 .btn-burger {
+  flex-shrink: 0;
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -220,6 +221,13 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 140;
+}
+
+/* Content title */
+.content-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 /* Views */
@@ -981,6 +989,28 @@ body {
   gap: 1rem;
 }
 
+.registros-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.registros-filters .filter-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.registros-filters .filter-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .registros-toolbar {
   display: flex;
   align-items: center;
@@ -1050,6 +1080,50 @@ body {
   padding: 0.5rem 0.75rem;
 }
 
+/* Select Recuperado - estilo profesional */
+.select-recuperado {
+  display: inline-block;
+  min-width: 120px;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.select-recuperado:hover {
+  border-color: var(--accent);
+  background-color: rgba(74, 158, 255, 0.08);
+}
+
+.select-recuperado:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.select-recuperado option {
+  padding: 0.5rem;
+  font-weight: 500;
+}
+
+.select-recuperado option[value="Recuperado"] {
+  color: var(--success);
+}
+
+.select-recuperado option[value="Pendiente"] {
+  color: var(--warning);
+}
+
 /* =============================================================================
    Tema claro (light)
    ============================================================================= */
@@ -1107,6 +1181,12 @@ body.theme-light {
   .data-table td {
     padding: 0.5rem 0.6rem;
     font-size: 0.8rem;
+  }
+
+  .select-recuperado {
+    min-width: 100px;
+    padding: 0.5rem 1.75rem 0.5rem 0.6rem;
+    font-size: 0.85rem;
   }
 
   /* Espacio extra para que la barra del navegador (Brave, Chrome, etc.) no tape los botones */

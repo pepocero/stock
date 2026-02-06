@@ -64,12 +64,13 @@ export async function existsCodigo(db, codigo, excludeId = null) {
  */
 export async function createRecambio(db, data) {
   const result = await db.prepare(`
-    INSERT INTO recambios (codigo, nombre, fabricante, cantidad)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO recambios (codigo, nombre, fabricante, alias, cantidad)
+    VALUES (?, ?, ?, ?, ?)
   `).bind(
     data.codigo,
     data.nombre || '',
     data.fabricante,
+    data.alias || '',
     Math.max(0, parseInt(data.cantidad) || 0)
   ).run();
 

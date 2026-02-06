@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS utilizados (
     fecha TEXT NOT NULL,
     codigo TEXT NOT NULL,
     cantidad INTEGER NOT NULL CHECK (cantidad >= 0),
+    nombre TEXT,
+    recuperado TEXT NOT NULL DEFAULT 'Pendiente',
+    fecharecup TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -54,6 +57,8 @@ CREATE TABLE IF NOT EXISTS recuperados (
     fecha TEXT NOT NULL,
     codigo TEXT NOT NULL,
     cantidad INTEGER NOT NULL CHECK (cantidad >= 0),
+    nombre TEXT,
+    utilizado_id INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

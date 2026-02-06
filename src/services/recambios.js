@@ -99,13 +99,13 @@ function normalizarFechaYYYYMMDD(val) {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function registrarUtilizado(db, recambioId, { fecha, cantidad }) {
+export async function registrarUtilizado(db, recambioId, { fecha, cantidad, usado }) {
   const recambio = await recambiosDb.getRecambioById(db, recambioId);
   if (!recambio) {
     return { success: false, errors: ['Recambio no encontrado'] };
   }
 
-  const qty = Math.max(0, Math.min(8, parseInt(cantidad) || 1));
+  const qty = Math.max(0, Math.min(20, parseInt(cantidad) || 1));
   if (qty === 0) {
     return { success: false, errors: ['cantidad: debe ser al menos 1 para registrar uso'] };
   }
@@ -115,11 +115,14 @@ export async function registrarUtilizado(db, recambioId, { fecha, cantidad }) {
     return { success: false, errors: [`Stock insuficiente. Disponible: ${stockActual}`] };
   }
 
+  const codigo = !!usado ? (recambio.codigo || '') + 'Z' : (recambio.codigo || '');
   const fechaNorm = normalizarFechaYYYYMMDD(fecha);
   await utilizadosDb.insertUtilizado(db, {
     fecha: fechaNorm,
-    codigo: recambio.codigo,
-    cantidad: qty
+    codigo,
+    cantidad: qty,
+    nombre: recambio.nombre || '',
+    recuperado: 'Pendiente'
   });
   await recambiosDb.updateCantidad(db, recambioId, -qty);
   return { success: true };
@@ -140,7 +143,9 @@ export async function registrarRecuperado(db, recambioId, { fecha, cantidad }) {
   await recuperadosDb.insertRecuperado(db, {
     fecha: fechaNorm,
     codigo: recambio.codigo,
-    cantidad: qty
+    cantidad: qty,
+    nombre: recambio.nombre || '',
+    utilizado_id: null
   });
   await recambiosDb.updateCantidad(db, recambioId, qty);
   return { success: true };

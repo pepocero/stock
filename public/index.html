@@ -12,6 +12,11 @@
 <body class="theme-light">
   <div class="app">
     <header class="header">
+      <button id="btn-menu-toggle" class="btn-burger" type="button" aria-label="Abrir menú de navegación">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
       <div class="header-main">
         <h1>Stock Recambios</h1>
         <p class="subtitle">Azkoyen · Jofemar</p>
@@ -22,11 +27,6 @@
           <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
           <button id="btn-theme-dark" type="button" title="Modo oscuro">🌙</button>
         </div>
-        <button id="btn-menu-toggle" class="btn-burger" type="button" aria-label="Abrir menú de navegación">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
     </header>
 
@@ -41,7 +41,6 @@
         <button class="tab sidebar-link" data-view="importar">Importar</button>
         <button class="tab sidebar-link" data-view="fabricantes">Fabricantes</button>
         <button class="tab sidebar-link" data-view="utilizados">Recambios Utilizados</button>
-        <button class="tab sidebar-link" data-view="recuperados">Recambios Recuperados</button>
       </nav>
       <div class="sidebar-footer">
         <button type="button" id="btn-instalar-app" class="btn btn-primary sidebar-install hidden">
@@ -51,6 +50,7 @@
     </aside>
 
     <main class="content">
+      <h2 id="content-title" class="content-title">Listado</h2>
       <!-- Vista: Listado -->
       <section id="view-listado" class="view active">
         <div class="filters">
@@ -121,7 +121,7 @@
             </div>
             <div class="field">
               <label for="nuevo-cantidad">Stock *</label>
-              <input type="number" id="nuevo-cantidad" min="0" value="0" required>
+              <input type="number" id="nuevo-cantidad" min="0" max="20" value="0" required>
             </div>
           </div>
           <div class="form-actions">
@@ -177,22 +177,14 @@
       <!-- Vista: Recambios Utilizados -->
       <section id="view-utilizados" class="view">
         <div class="registros-section">
+          <div class="registros-filters">
+            <input type="search" id="filter-utilizados" placeholder="Buscar por fecha o nombre de recambio..." class="filter-search">
+          </div>
           <div class="registros-toolbar">
             <button type="button" id="btn-exportar-utilizados-seleccionados" class="btn btn-primary btn-sm hidden">Exportar seleccionados</button>
             <button type="button" id="btn-borrar-utilizados-seleccionados" class="btn btn-danger btn-sm hidden">Borrar seleccionados</button>
           </div>
           <div id="utilizados-list" class="registros-por-fecha"></div>
-        </div>
-      </section>
-
-      <!-- Vista: Recambios Recuperados -->
-      <section id="view-recuperados" class="view">
-        <div class="registros-section">
-          <div class="registros-toolbar">
-            <button type="button" id="btn-exportar-recuperados-seleccionados" class="btn btn-primary btn-sm hidden">Exportar seleccionados</button>
-            <button type="button" id="btn-borrar-recuperados-seleccionados" class="btn btn-danger btn-sm hidden">Borrar seleccionados</button>
-          </div>
-          <div id="recuperados-list" class="registros-por-fecha"></div>
         </div>
       </section>
 
@@ -229,29 +221,22 @@
                 <option value="6">6</option>
                 <option value="7">7</option>
                 <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
               </select>
+              <label class="detalle-check-usado"><input type="checkbox" id="detalle-usado" title="Marcar si el recambio es usado"> Usado</label>
               <button type="button" id="btn-check-utilizado" class="btn btn-check btn-check-utilizado" title="Registrar uso">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </button>
-            </div>
-          </div>
-          <div class="detalle-section recuperados-section">
-            <h3 class="detalle-section-title">Recambio Recuperado</h3>
-            <div class="detalle-accion-row">
-              <input type="date" id="detalle-fecha-recuperado" class="input-fecha">
-              <select id="detalle-cantidad-recuperado" class="select-cantidad">
-                <option value="0">0</option>
-                <option value="1" selected>1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-              </select>
-              <button type="button" id="btn-check-recuperado" class="btn btn-check btn-check-recuperado" title="Registrar recepción">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
             </div>
           </div>
@@ -306,6 +291,18 @@
                 <option value="6">6</option>
                 <option value="7">7</option>
                 <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
               </select>
               <span id="stock-bajo-badge" class="badge badge-warning hidden">Stock bajo</span>
             </div>

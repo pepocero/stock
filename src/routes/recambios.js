@@ -92,7 +92,8 @@ export async function handleRecambioUtilizar(request, env, id) {
 
   const result = await recambiosService.registrarUtilizado(env.DB, recambioId, {
     fecha: body.fecha,
-    cantidad: body.cantidad
+    cantidad: body.cantidad,
+    usado: !!body.usado
   });
   if (!result.success) {
     return error(result.errors.join('; '), 400);
