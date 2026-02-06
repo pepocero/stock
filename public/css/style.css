@@ -207,7 +207,7 @@ body {
 
 .sidebar-footer {
   margin-top: auto;
-  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0.75rem) + 0.5rem);
+  padding-bottom: max(3.25rem, env(safe-area-inset-bottom, 0.75rem) + 0.5rem);
 }
 
 .sidebar-install {
