@@ -27,6 +27,6 @@
     "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "^4.63.0"
   }
 }
