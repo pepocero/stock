@@ -5,13 +5,15 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
 let utilizadosData = [];
 let recuperadosData = [];
 let deferredInstallPrompt = null;
+let backPressTimestamp = 0;
+let backHandler = null;
 
 // =============================================================================
 // Tema (oscuro / claro)
@@ -155,6 +157,43 @@ async function handleInstalarApp() {
   } finally {
     deferredInstallPrompt = null;
   }
+}
+
+function isStandalonePWA() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    (window.navigator && window.navigator.standalone);
+}
+
+function initBackButtonBehavior() {
+  if (!isStandalonePWA()) return;
+  if (backHandler) return;
+
+  const currentState = history.state && typeof history.state === 'object' ? history.state : {};
+  try {
+    history.replaceState({ ...currentState, pwaRoot: true }, document.title, window.location.href);
+    history.pushState({ ...currentState, pwaRoot: true }, document.title, window.location.href);
+  } catch {
+    // Si el history API falla, no hacemos nada especial
+    return;
+  }
+
+  backHandler = (event) => {
+    if (!event.state || !event.state.pwaRoot) return;
+    const now = Date.now();
+    if (now - backPressTimestamp < 1500) {
+      window.removeEventListener('popstate', backHandler);
+      backHandler = null;
+      history.back();
+      return;
+    }
+    backPressTimestamp = now;
+    showFeedback('Pulsa otra vez para salir', 'error');
+    try {
+      history.pushState({ pwaRoot: true }, document.title, window.location.href);
+    } catch {}
+  };
+
+  window.addEventListener('popstate', backHandler);
 }
 
 // =============================================================================
@@ -1253,4 +1292,5 @@ async function init() {
 initTheme();
 initVersion();
 initPWA();
+initBackButtonBehavior();
 init();
