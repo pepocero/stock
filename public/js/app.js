@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.7';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -13,6 +13,7 @@ let utilizadosData = [];
 let recuperadosData = [];
 let deferredInstallPrompt = null;
 let backHandler = null;
+let lastBackPressAt = 0;
 
 // =============================================================================
 // Tema (oscuro / claro)
@@ -164,6 +165,7 @@ function isStandalonePWA() {
 }
 
 function pushHistoryState(state) {
+  if (typeof history === 'undefined' || !history.pushState) return;
   try {
     history.pushState(state, document.title, location.href);
   } catch {}
@@ -171,25 +173,46 @@ function pushHistoryState(state) {
 
 function handlePopState(event) {
   const state = event && event.state;
-  if (state && state.panel === 'detalle' && state.id) {
-    openDetalle(state.id, false);
+  if (state && state.panel === 'detalle' && state.id != null) {
+    try {
+      openDetalle(Number(state.id), false);
+    } catch (err) {
+      showDetallePanel(false);
+    }
     return;
   }
-  if (state && state.panel === 'editar' && state.id) {
-    openEditar(state.id, false);
+  if (state && state.panel === 'editar' && state.id != null) {
+    try {
+      openEditar(Number(state.id), false);
+    } catch (err) {
+      showEditarPanel(false);
+    }
     return;
   }
   showDetallePanel(false);
   showEditarPanel(false);
   if (isStandalonePWA()) {
+    const now = Date.now();
+    if (now - lastBackPressAt < 1000) {
+      window.removeEventListener('popstate', backHandler);
+      backHandler = null;
+      lastBackPressAt = 0;
+      history.back();
+      return;
+    }
+    lastBackPressAt = now;
+    showFeedback('Pulsa 2 veces para cerrar la app', 'error');
     try {
-      history.pushState({ root: true }, document.title, location.href);
+      if (history.pushState) {
+        history.pushState({ root: true }, document.title, location.href);
+      }
     } catch {}
   }
 }
 
 function setupBackButtonHistory() {
   if (backHandler) return;
+  if (typeof history === 'undefined' || !history.replaceState || !history.pushState) return;
   try {
     history.replaceState({ root: true }, document.title, location.href);
     history.pushState({ root: true }, document.title, location.href);
@@ -400,7 +423,7 @@ async function submitNuevo(e) {
 // Detalle
 // =============================================================================
 
-async function openDetalle(id) {
+async function openDetalle(id, pushState = true) {
   try {
     const recambio = await api(`/recambios/${id}`);
     const infoEl = document.getElementById('detalle-info');

@@ -576,12 +576,12 @@ body {
   margin: 0 0 1rem;
 }
 
-/* Toast - optimizado para móviles/tablets */
+/* Toast - optimizado para móviles: arriba para evitar la barra del navegador */
 .toast-msg {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%) translateY(100%);
-  bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  top: max(1rem, env(safe-area-inset-top, 1rem));
+  transform: translateX(-50%) translateY(-120%);
   min-width: 200px;
   max-width: min(90vw, 360px);
   padding: 0.875rem 1.25rem;
@@ -1091,10 +1091,6 @@ body.theme-light {
 
   .data-table {
     min-width: 600px; /* permite scroll horizontal en pantallas estrechas */
-  }
-
-  .toast-msg {
-    bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .detalle-accion-row {
