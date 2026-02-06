@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1d23">
   <title>Stock Recambios - Control de inventario</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="theme-light">
@@ -13,22 +15,40 @@
       <div class="header-main">
         <h1>Stock Recambios</h1>
         <p class="subtitle">Azkoyen · Jofemar</p>
+        <span id="app-version" class="app-version" aria-label="Versión de la aplicación"></span>
       </div>
-      <div class="theme-toggle" aria-label="Cambiar tema">
-        <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
-        <button id="btn-theme-dark" type="button" title="Modo oscuro">🌙</button>
+      <div class="header-actions">
+        <div class="theme-toggle" aria-label="Cambiar tema">
+          <button id="btn-theme-light" type="button" title="Modo claro">☀</button>
+          <button id="btn-theme-dark" type="button" title="Modo oscuro">🌙</button>
+        </div>
+        <button id="btn-menu-toggle" class="btn-burger" type="button" aria-label="Abrir menú de navegación">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </header>
 
-    <nav class="tabs">
-      <button class="tab active" data-view="listado">Listado</button>
-      <button class="tab" data-view="nuevo">Nuevo recambio</button>
-      <button class="tab" data-view="importar">Importar</button>
-      <button class="tab" data-view="fabricantes">Fabricantes</button>
-      <button class="tab" data-view="utilizados">Recambios Utilizados</button>
-      <button class="tab" data-view="recuperados">Recambios Recuperados</button>
-      <!-- <button class="tab" data-view="campos">Campos adicionales</button> -->
-    </nav>
+    <button id="sidebar-backdrop" class="sidebar-backdrop hidden" aria-hidden="true"></button>
+    <aside id="sidebar" class="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-header">
+        <h2>Menú</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="tab sidebar-link" data-view="listado">Listado</button>
+        <button class="tab sidebar-link" data-view="nuevo">Nuevo recambio</button>
+        <button class="tab sidebar-link" data-view="importar">Importar</button>
+        <button class="tab sidebar-link" data-view="fabricantes">Fabricantes</button>
+        <button class="tab sidebar-link" data-view="utilizados">Recambios Utilizados</button>
+        <button class="tab sidebar-link" data-view="recuperados">Recambios Recuperados</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button type="button" id="btn-instalar-app" class="btn btn-primary sidebar-install hidden">
+          Instalar app
+        </button>
+      </div>
+    </aside>
 
     <main class="content">
       <!-- Vista: Listado -->

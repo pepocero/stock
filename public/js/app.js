@@ -5,10 +5,13 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
+const APP_VERSION = '1.0.0';
+const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
 let utilizadosData = [];
 let recuperadosData = [];
+let deferredInstallPrompt = null;
 
 // =============================================================================
 // Tema (oscuro / claro)
@@ -87,6 +90,71 @@ async function api(endpoint, options = {}) {
     throw new Error(err);
   }
   return data;
+}
+
+// =============================================================================
+// PWA / Versión
+// =============================================================================
+
+function initVersion() {
+  const versionEl = document.getElementById('app-version');
+  if (versionEl) {
+    versionEl.textContent = `v${APP_VERSION}`;
+  }
+  try {
+    const stored = localStorage.getItem(VERSION_STORAGE_KEY);
+    if (stored && stored !== APP_VERSION) {
+      localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      showFeedback(`Nueva versión cargada (${APP_VERSION})`, 'success');
+    } else if (!stored) {
+      localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+    }
+  } catch {
+    // Ignorar errores de almacenamiento
+  }
+}
+
+function initPWA() {
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const btn = document.getElementById('btn-instalar-app');
+    if (btn) btn.classList.remove('hidden');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('btn-instalar-app');
+    if (btn) btn.classList.add('hidden');
+    showFeedback('Aplicación instalada correctamente', 'success');
+  });
+}
+
+async function handleInstalarApp() {
+  if (!deferredInstallPrompt) {
+    showFeedback('La instalación no está disponible en este dispositivo', 'error');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  try {
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      const btn = document.getElementById('btn-instalar-app');
+      if (btn) btn.classList.add('hidden');
+    }
+  } finally {
+    deferredInstallPrompt = null;
+  }
 }
 
 // =============================================================================
@@ -1155,7 +1223,34 @@ async function init() {
   document.getElementById('editar-cantidad').addEventListener('change', e => {
     updateStockBajoBadge(parseInt(e.target.value) || 0);
   });
+
+  const sidebar = document.getElementById('sidebar');
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  const btnBurger = document.getElementById('btn-menu-toggle');
+  function setSidebarOpen(open) {
+    if (!sidebar) return;
+    if (open) {
+      sidebar.classList.add('sidebar-open');
+      if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
+    } else {
+      sidebar.classList.remove('sidebar-open');
+      if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+    }
+  }
+  if (btnBurger && sidebar) {
+    btnBurger.addEventListener('click', () => setSidebarOpen(true));
+  }
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+  }
+  document.querySelectorAll('.sidebar-nav .tab').forEach(btn => {
+    btn.addEventListener('click', () => setSidebarOpen(false));
+  });
+
+  document.getElementById('btn-instalar-app')?.addEventListener('click', handleInstalarApp);
 }
 
 initTheme();
+initVersion();
+initPWA();
 init();
