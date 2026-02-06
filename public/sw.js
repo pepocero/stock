@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-recambios-v1.0.2';
+const CACHE_NAME = 'stock-recambios-v1.0.4';
 
 const ASSETS = [
   '/',

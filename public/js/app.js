@@ -5,14 +5,13 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.4';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
 let utilizadosData = [];
 let recuperadosData = [];
 let deferredInstallPrompt = null;
-let backPressTimestamp = 0;
 let backHandler = null;
 
 // =============================================================================
@@ -160,40 +159,61 @@ async function handleInstalarApp() {
 }
 
 function isStandalonePWA() {
-  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+  return (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: minimal-ui)').matches)) ||
     (window.navigator && window.navigator.standalone);
 }
 
-function initBackButtonBehavior() {
-  if (!isStandalonePWA()) return;
-  if (backHandler) return;
-
-  const currentState = history.state && typeof history.state === 'object' ? history.state : {};
+function pushHistoryState(state) {
   try {
-    history.replaceState({ ...currentState, pwaRoot: true }, document.title, window.location.href);
-    history.pushState({ ...currentState, pwaRoot: true }, document.title, window.location.href);
-  } catch {
-    // Si el history API falla, no hacemos nada especial
+    history.pushState(state, document.title, location.href);
+  } catch {}
+}
+
+function handlePopState(event) {
+  const state = event && event.state;
+  if (state && state.panel === 'detalle' && state.id) {
+    openDetalle(state.id, false);
     return;
   }
-
-  backHandler = (event) => {
-    if (!event.state || !event.state.pwaRoot) return;
-    const now = Date.now();
-    if (now - backPressTimestamp < 1500) {
-      window.removeEventListener('popstate', backHandler);
-      backHandler = null;
-      history.back();
-      return;
-    }
-    backPressTimestamp = now;
-    showFeedback('Pulsa otra vez para salir', 'error');
+  if (state && state.panel === 'editar' && state.id) {
+    openEditar(state.id, false);
+    return;
+  }
+  showDetallePanel(false);
+  showEditarPanel(false);
+  if (isStandalonePWA()) {
     try {
-      history.pushState({ pwaRoot: true }, document.title, window.location.href);
+      history.pushState({ root: true }, document.title, location.href);
     } catch {}
-  };
+  }
+}
 
+function setupBackButtonHistory() {
+  if (backHandler) return;
+  try {
+    history.replaceState({ root: true }, document.title, location.href);
+    history.pushState({ root: true }, document.title, location.href);
+  } catch {
+    return;
+  }
+  backHandler = handlePopState;
   window.addEventListener('popstate', backHandler);
+}
+
+function initBackButtonBehavior() {
+  if (window.self !== window.top) return;
+
+  function setupOnFirstInteraction() {
+    setupBackButtonHistory();
+  }
+
+  if (isStandalonePWA()) {
+    document.addEventListener('click', setupOnFirstInteraction, { once: true, passive: true });
+    document.addEventListener('touchstart', setupOnFirstInteraction, { once: true, passive: true });
+    document.addEventListener('scroll', setupOnFirstInteraction, { once: true, passive: true });
+  } else {
+    window.addEventListener('popstate', handlePopState);
+  }
 }
 
 // =============================================================================
@@ -421,6 +441,7 @@ async function openDetalle(id) {
     document.getElementById('btn-check-utilizado').dataset.id = recambio.id;
     document.getElementById('btn-check-recuperado').dataset.id = recambio.id;
     showDetallePanel(true);
+    if (pushState !== false) pushHistoryState({ panel: 'detalle', id: recambio.id });
   } catch (err) {
     showFeedback(err.message, 'error');
   }
@@ -513,7 +534,7 @@ async function eliminarRecambioDesdeDetalle() {
 // Editar
 // =============================================================================
 
-async function openEditar(id) {
+async function openEditar(id, pushState = true) {
   try {
     const recambio = await api(`/recambios/${id}`);
     document.getElementById('editar-id').value = recambio.id;
@@ -527,6 +548,7 @@ async function openEditar(id) {
 
     updateStockBajoBadge(parseInt(cantidadSelect.value) || 0);
     showEditarPanel(true);
+    if (pushState !== false) pushHistoryState({ panel: 'editar', id: recambio.id });
   } catch (err) {
     showFeedback(err.message, 'error');
   }
