@@ -362,15 +362,18 @@ body {
   color: var(--text-muted);
 }
 
-.data-table tbody tr.recambio-row {
+.data-table tbody tr.recambio-row,
+.data-table tbody tr.registro-utilizado-row {
   cursor: pointer;
 }
 
-.data-table tbody tr.recambio-row:hover {
+.data-table tbody tr.recambio-row:hover,
+.data-table tbody tr.registro-utilizado-row:hover {
   background: rgba(74, 158, 255, 0.08);
 }
 
-.data-table tbody tr.recambio-row:active {
+.data-table tbody tr.recambio-row:active,
+.data-table tbody tr.registro-utilizado-row:active {
   background: rgba(74, 158, 255, 0.15);
 }
 

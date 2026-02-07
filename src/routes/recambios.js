@@ -32,12 +32,13 @@ export async function handleRecambios(request, env, url) {
   if (method === 'GET') {
     const fabricante = url.searchParams.get('fabricante');
     const search = url.searchParams.get('search');
+    const codigo = url.searchParams.get('codigo');
     const sortBy = url.searchParams.get('sortBy');
     const sortOrder = url.searchParams.get('sortOrder');
     const limit = Math.min(parseInt(url.searchParams.get('limit')) || 100, 500);
     const offset = parseInt(url.searchParams.get('offset')) || 0;
 
-    const recambios = await recambiosDb.listRecambios(env.DB, { fabricante, search, sortBy, sortOrder, limit, offset });
+    const recambios = await recambiosDb.listRecambios(env.DB, { fabricante, search, codigo, sortBy, sortOrder, limit, offset });
     return json(recambios);
   }
 

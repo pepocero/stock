@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.02';
+const APP_VERSION = '1.1.03';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -1014,12 +1014,12 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       const recup = r.recuperado || 'Pendiente';
       const fecharecup = r.fecharecup ? formatDateDDMMYYYY(r.fecharecup) : '-';
       return `
-      <tr data-id="${r.id}">
+      <tr class="registro-utilizado-row" data-id="${r.id}" data-codigo="${escapeHtml(r.codigo)}" tabindex="0" role="button">
         <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
         <td>${escapeHtml(r.codigo)}</td>
         <td>${escapeHtml(r.nombre || '')}</td>
         <td>${r.cantidad}</td>
-        <td>
+        <td onclick="event.stopPropagation()">
           <select class="select-recuperado" data-id="${r.id}" title="Estado de recuperación">
             <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
             <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
@@ -1080,6 +1080,32 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
 
   container.querySelectorAll('.registro-fecha-checkbox').forEach(cb => {
     cb.addEventListener('change', () => updateExportarSeleccionadosBtn(tipo));
+  });
+
+  container.querySelectorAll('.registro-utilizado-row').forEach(row => {
+    row.addEventListener('click', async (e) => {
+      if (e.target.closest('.select-recuperado')) return;
+      let codigo = row.dataset.codigo;
+      if (!codigo) return;
+      codigo = codigo.replace(/Z$/, ''); /* recambios usados guardan codigo con Z */
+      try {
+        const recambios = await api(`/recambios?codigo=${encodeURIComponent(codigo)}&limit=1`);
+        const recambio = recambios?.[0];
+        if (recambio) {
+          openDetalle(recambio.id);
+        } else {
+          showFeedback('Recambio no encontrado en el listado', 'error');
+        }
+      } catch (err) {
+        showFeedback(err.message, 'error');
+      }
+    });
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!e.target.closest('.select-recuperado')) row.click();
+      }
+    });
   });
 
   container.querySelectorAll('.select-recuperado').forEach(sel => {
