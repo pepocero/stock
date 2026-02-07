@@ -180,7 +180,13 @@
             <input type="search" id="filter-utilizados" placeholder="Buscar por fecha o nombre de recambio..." class="filter-search">
           </div>
           <div class="registros-toolbar">
-            <button type="button" id="btn-exportar-utilizados-seleccionados" class="btn btn-primary btn-sm hidden">Exportar seleccionados</button>
+            <div class="exportar-dropdown-wrapper hidden" id="exportar-seleccionados-wrapper">
+              <button type="button" id="btn-exportar-utilizados-seleccionados" class="btn btn-primary btn-sm">Exportar seleccionados</button>
+              <div class="exportar-dropdown-menu hidden" id="exportar-seleccionados-menu">
+                <button type="button" class="exportar-option" data-format="excel">Excel</button>
+                <button type="button" class="exportar-option" data-format="imagen">Imagen</button>
+              </div>
+            </div>
             <button type="button" id="btn-borrar-utilizados-seleccionados" class="btn btn-danger btn-sm hidden">Borrar seleccionados</button>
           </div>
           <div id="utilizados-list" class="registros-por-fecha"></div>
@@ -334,6 +340,7 @@
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

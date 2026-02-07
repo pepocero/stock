@@ -1111,7 +1111,13 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
           <span class="registro-fecha-count">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
           <div class="registro-fecha-actions">
             <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
-            <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
+            <div class="exportar-dropdown-wrapper">
+              <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
+              <div class="exportar-dropdown-menu hidden">
+                <button type="button" class="exportar-option" data-format="excel">Excel</button>
+                <button type="button" class="exportar-option" data-format="imagen">Imagen</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
@@ -1143,11 +1149,30 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
     });
   });
 
-  container.querySelectorAll('.btn-exportar-fecha').forEach(btn => {
+  container.querySelectorAll('.exportar-dropdown-wrapper').forEach(wrapper => {
+    const btn = wrapper.querySelector('.btn-exportar-fecha');
+    const menu = wrapper.querySelector('.exportar-dropdown-menu');
+    const options = wrapper.querySelectorAll('.exportar-option');
+    if (!btn || !menu) return;
+
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const itemsFecha = items.filter(i => i.fecha === btn.dataset.fecha);
-      exportarRegistrosExcel(titulo, itemsFecha, 'utilizados');
+      document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
+      menu.classList.toggle('hidden');
+    });
+
+    options.forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const fecha = btn.dataset.fecha;
+        const itemsFecha = items.filter(i => i.fecha === fecha);
+        menu.classList.add('hidden');
+        if (opt.dataset.format === 'excel') {
+          exportarRegistrosExcel(titulo, itemsFecha, 'utilizados');
+        } else {
+          exportarRegistrosImagen(titulo, itemsFecha, 'utilizados');
+        }
+      });
     });
   });
 
@@ -1204,12 +1229,14 @@ function updateExportarSeleccionadosBtn(tipo) {
   const visible = checked.length > 0;
   const btnExportar = document.getElementById(`btn-exportar-${tipo}-seleccionados`);
   const btnBorrar = document.getElementById(`btn-borrar-${tipo}-seleccionados`);
-  if (btnExportar) {
+  const wrapperExportar = btnExportar?.closest('.exportar-dropdown-wrapper');
+  if (wrapperExportar || btnExportar) {
+    const el = wrapperExportar || btnExportar;
     if (visible) {
-      btnExportar.classList.remove('hidden');
-      btnExportar.textContent = `Exportar seleccionados (${checked.length})`;
+      el.classList.remove('hidden');
+      if (btnExportar) btnExportar.textContent = `Exportar seleccionados (${checked.length})`;
     } else {
-      btnExportar.classList.add('hidden');
+      el.classList.add('hidden');
     }
   }
   if (btnBorrar) {
@@ -1220,6 +1247,96 @@ function updateExportarSeleccionadosBtn(tipo) {
       btnBorrar.classList.add('hidden');
     }
   }
+}
+
+async function exportarRegistrosImagen(titulo, items, tipo = '') {
+  if (!items.length) {
+    showFeedback('No hay datos para exportar', 'error');
+    return;
+  }
+  if (typeof html2canvas === 'undefined') {
+    showFeedback('Librería de captura no cargada', 'error');
+    return;
+  }
+  const headers = ['Fecha', 'Código', 'Nombre', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
+  const rows = items.map(i => [
+    formatDateDDMMYYYY(i.fecha),
+    i.codigo,
+    i.nombre || '',
+    i.cantidad,
+    i.recuperado || 'Pendiente',
+    i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
+  ]);
+  const tableHtml = `
+    <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:#fff;padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
+      <h3 style="margin:0 0 1rem;font-size:1.1rem;">${escapeHtml(titulo)}</h3>
+      <table style="border-collapse:collapse;width:100%;">
+        <thead>
+          <tr>
+            ${headers.map(h => `<th style="border:1px solid #ccc;padding:6px 10px;text-align:left;background:#f0f0f0;">${escapeHtml(h)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              ${r.map(c => `<td style="border:1px solid #ccc;padding:6px 10px;">${escapeHtml(String(c))}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = tableHtml;
+  const tempEl = wrap.firstElementChild;
+  document.body.appendChild(tempEl);
+
+  try {
+    const canvas = await html2canvas(tempEl, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    document.body.removeChild(tempEl);
+
+    const filename = `${titulo.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.png`;
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        showFeedback('Error al generar imagen', 'error');
+        return;
+      }
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: titulo,
+            files: [file]
+          });
+          showFeedback('Listo para compartir', 'success');
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            descargarBlob(blob, filename);
+            showFeedback('Imagen descargada (compartir no disponible)', 'success');
+          }
+        }
+      } else {
+        descargarBlob(blob, filename);
+        showFeedback('Imagen descargada', 'success');
+      }
+    }, 'image/png', 1);
+  } catch (err) {
+    document.body.contains(tempEl) && document.body.removeChild(tempEl);
+    showFeedback(err?.message || 'Error al generar imagen', 'error');
+  }
+}
+
+function descargarBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportarRegistrosExcel(titulo, items, tipo = '') {
@@ -1362,8 +1479,37 @@ async function init() {
     });
   });
 
-  document.getElementById('btn-exportar-utilizados-seleccionados')?.addEventListener('click', exportarUtilizadosSeleccionados);
+  const btnExportarSel = document.getElementById('btn-exportar-utilizados-seleccionados');
+  const menuExportarSel = document.getElementById('exportar-seleccionados-menu');
+  if (btnExportarSel && menuExportarSel) {
+    btnExportarSel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
+      menuExportarSel.classList.toggle('hidden');
+    });
+    menuExportarSel.querySelectorAll('.exportar-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menuExportarSel.classList.add('hidden');
+        const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
+        const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
+        if (!fechas.size) return;
+        const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
+        const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
+        const items = filtered.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+        if (opt.dataset.format === 'excel') {
+          exportarRegistrosExcel('Recambios Utilizados', items, 'utilizados');
+        } else {
+          exportarRegistrosImagen('Recambios Utilizados', items, 'utilizados');
+        }
+      });
+    });
+  }
   document.getElementById('btn-borrar-utilizados-seleccionados')?.addEventListener('click', borrarUtilizadosSeleccionados);
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
+  });
 
   const filterUtilizados = document.getElementById('filter-utilizados');
   if (filterUtilizados) {

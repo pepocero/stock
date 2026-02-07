@@ -1106,6 +1106,51 @@ body {
   color: var(--text-muted);
 }
 
+/* Dropdown exportar */
+.exportar-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.exportar-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.25rem;
+  min-width: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  padding: 0.25rem 0;
+}
+
+.exportar-dropdown-menu.hidden {
+  display: none !important;
+}
+
+.exportar-dropdown-menu .exportar-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: background 0.2s;
+}
+
+.exportar-dropdown-menu .exportar-option:hover {
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.exportar-dropdown-wrapper.hidden {
+  display: none !important;
+}
+
 .registro-fecha-actions {
   display: flex;
   align-items: center;
