@@ -1113,10 +1113,6 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
             <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
             <div class="exportar-dropdown-wrapper">
               <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
-              <div class="exportar-dropdown-menu hidden">
-                <button type="button" class="exportar-option" data-format="excel">Excel</button>
-                <button type="button" class="exportar-option" data-format="imagen">Imagen</button>
-              </div>
             </div>
           </div>
         </div>
@@ -1151,28 +1147,14 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
 
   container.querySelectorAll('.exportar-dropdown-wrapper').forEach(wrapper => {
     const btn = wrapper.querySelector('.btn-exportar-fecha');
-    const menu = wrapper.querySelector('.exportar-dropdown-menu');
-    const options = wrapper.querySelectorAll('.exportar-option');
-    if (!btn || !menu) return;
+    if (!btn) return;
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
-      menu.classList.toggle('hidden');
-    });
-
-    options.forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const fecha = btn.dataset.fecha;
-        const itemsFecha = items.filter(i => i.fecha === fecha);
-        menu.classList.add('hidden');
-        if (opt.dataset.format === 'excel') {
-          exportarRegistrosExcel(titulo, itemsFecha, 'utilizados');
-        } else {
-          exportarRegistrosImagen(titulo, itemsFecha, 'utilizados');
-        }
-      });
+      closeExportarPortal();
+      const fecha = btn.dataset.fecha;
+      const itemsFecha = items.filter(i => i.fecha === fecha);
+      showExportarPortal(btn, () => exportarRegistrosExcel(titulo, itemsFecha, 'utilizados'), () => exportarRegistrosImagen(titulo, itemsFecha, 'utilizados'));
     });
   });
 
@@ -1222,6 +1204,50 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       }
     });
   });
+}
+
+function closeExportarPortal() {
+  document.getElementById('exportar-dropdown-portal')?.remove();
+}
+
+function showExportarPortal(anchorEl, onExcel, onImagen) {
+  closeExportarPortal();
+  const rect = anchorEl.getBoundingClientRect();
+  const menuH = 90;
+  const showAbove = rect.bottom + menuH > window.innerHeight - 20 && rect.top > menuH;
+  const menu = document.createElement('div');
+  menu.id = 'exportar-dropdown-portal';
+  menu.className = 'exportar-dropdown-portal';
+  menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 136))}px`;
+  menu.style.top = showAbove ? `${rect.top - menuH - 4}px` : `${rect.bottom + 4}px`;
+
+  const close = () => {
+    menu.remove();
+    document.removeEventListener('click', clickOutside);
+  };
+
+  const clickOutside = (e) => {
+    if (!menu.contains(e.target) && !anchorEl.contains(e.target)) close();
+  };
+
+  menu.innerHTML = `
+    <button type="button" class="exportar-option" data-format="excel">Excel</button>
+    <button type="button" class="exportar-option" data-format="imagen">Imagen</button>
+  `;
+
+  menu.querySelector('[data-format="excel"]').addEventListener('click', (e) => {
+    e.stopPropagation();
+    onExcel();
+    close();
+  });
+  menu.querySelector('[data-format="imagen"]').addEventListener('click', (e) => {
+    e.stopPropagation();
+    onImagen();
+    close();
+  });
+
+  document.body.appendChild(menu);
+  setTimeout(() => document.addEventListener('click', clickOutside), 0);
 }
 
 function updateExportarSeleccionadosBtn(tipo) {
@@ -1480,36 +1506,27 @@ async function init() {
   });
 
   const btnExportarSel = document.getElementById('btn-exportar-utilizados-seleccionados');
-  const menuExportarSel = document.getElementById('exportar-seleccionados-menu');
-  if (btnExportarSel && menuExportarSel) {
+  if (btnExportarSel) {
     btnExportarSel.addEventListener('click', (e) => {
       e.stopPropagation();
-      document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
-      menuExportarSel.classList.toggle('hidden');
-    });
-    menuExportarSel.querySelectorAll('.exportar-option').forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        menuExportarSel.classList.add('hidden');
+      const getItems = () => {
         const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
         const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
-        if (!fechas.size) return;
+        if (!fechas.size) return [];
         const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
         const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
-        const items = filtered.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
-        if (opt.dataset.format === 'excel') {
-          exportarRegistrosExcel('Recambios Utilizados', items, 'utilizados');
-        } else {
-          exportarRegistrosImagen('Recambios Utilizados', items, 'utilizados');
-        }
-      });
+        return filtered.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+      };
+      const items = getItems();
+      if (!items.length) return;
+      showExportarPortal(
+        btnExportarSel,
+        () => exportarRegistrosExcel('Recambios Utilizados', items, 'utilizados'),
+        () => exportarRegistrosImagen('Recambios Utilizados', items, 'utilizados')
+      );
     });
   }
   document.getElementById('btn-borrar-utilizados-seleccionados')?.addEventListener('click', borrarUtilizadosSeleccionados);
-
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.exportar-dropdown-menu').forEach(m => m.classList.add('hidden'));
-  });
 
   const filterUtilizados = document.getElementById('filter-utilizados');
   if (filterUtilizados) {

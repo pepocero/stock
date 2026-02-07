@@ -1130,7 +1130,8 @@ body {
   display: none !important;
 }
 
-.exportar-dropdown-menu .exportar-option {
+.exportar-dropdown-menu .exportar-option,
+.exportar-dropdown-portal .exportar-option {
   display: block;
   width: 100%;
   padding: 0.5rem 1rem;
@@ -1143,12 +1144,25 @@ body {
   transition: background 0.2s;
 }
 
-.exportar-dropdown-menu .exportar-option:hover {
+.exportar-dropdown-menu .exportar-option:hover,
+.exportar-dropdown-portal .exportar-option:hover {
   background: rgba(74, 158, 255, 0.1);
 }
 
 .exportar-dropdown-wrapper.hidden {
   display: none !important;
+}
+
+/* Portal: dropdown fijo en body para evitar recorte en acordeones */
+.exportar-dropdown-portal {
+  position: fixed;
+  min-width: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 9999;
+  padding: 0.25rem 0;
 }
 
 .registro-fecha-actions {
