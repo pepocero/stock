@@ -1175,6 +1175,15 @@ body.theme-light {
     min-width: 600px; /* permite scroll horizontal en pantallas estrechas */
   }
 
+  .registro-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .registro-table-wrap .registro-table {
+    min-width: 700px; /* 6 columnas: Fecha, Código, Nombre, Cantidad, Recuperado, Fecha Recup. */
+  }
+
   .detalle-accion-row {
     gap: 0.75rem;
   }

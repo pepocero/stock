@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.01';
+const APP_VERSION = '1.1.02';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -1042,10 +1042,12 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
           </div>
         </div>
         <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
-          <table class="data-table registro-table">
-            ${thead}
-            <tbody>${rows}</tbody>
-          </table>
+          <div class="table-container registro-table-wrap">
+            <table class="data-table registro-table">
+              ${thead}
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
         </div>
       </div>
     `;
