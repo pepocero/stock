@@ -686,6 +686,40 @@ body {
   min-width: 120px;
 }
 
+/* Modal detalle registro utilizado */
+.modal-utilizado-detalle-box {
+  max-width: 400px;
+}
+
+.modal-utilizado-detalle-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+}
+
+.modal-utilizado-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.modal-utilizado-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.modal-utilizado-value {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.modal-utilizado-select {
+  width: 100%;
+  max-width: 200px;
+}
+
 /* Error message (legacy/inline) */
 .error-msg {
   background: rgba(234, 67, 53, 0.15);

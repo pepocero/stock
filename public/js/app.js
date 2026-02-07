@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.03';
+const APP_VERSION = '1.1.04';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -676,6 +676,79 @@ function closeModalNotificacion() {
   if (overlay) overlay.classList.add('hidden');
 }
 
+function showModalUtilizadoDetalle(item) {
+  const overlay = document.getElementById('modal-utilizado-detalle');
+  const content = document.getElementById('modal-utilizado-detalle-content');
+  if (!overlay || !content) return;
+  const recup = item.recuperado || 'Pendiente';
+  const fecharecup = item.fecharecup ? formatDateDDMMYYYY(item.fecharecup) : '—';
+  content.innerHTML = `
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Fecha</span>
+      <span class="modal-utilizado-value">${escapeHtml(formatDateDDMMYYYY(item.fecha))}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Código</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.codigo)}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Nombre</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.nombre || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Cantidad</span>
+      <span class="modal-utilizado-value">${item.cantidad}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Recuperado</span>
+      <select class="select-recuperado modal-utilizado-select" data-id="${item.id}" title="Estado de recuperación">
+        <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+        <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
+      </select>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Fecha Recup.</span>
+      <span class="modal-utilizado-value" id="modal-utilizado-fecharecup">${escapeHtml(fecharecup)}</span>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  overlay.querySelector('#btn-cerrar-modal-utilizado')?.focus();
+
+  const sel = content.querySelector('.select-recuperado.modal-utilizado-select');
+  if (sel) {
+    sel.addEventListener('change', async (e) => {
+      const valor = e.target.value;
+      const prevVal = utilizadosData.find(u => u.id === item.id)?.recuperado || 'Pendiente';
+      try {
+        await api(`/utilizados/${item.id}`, { method: 'PATCH', body: { recuperado: valor } });
+        const u = utilizadosData.find(u => u.id === item.id);
+        if (u) {
+          u.recuperado = valor;
+          u.fecharecup = valor === 'Recuperado' ? new Date().toISOString().slice(0, 10) : null;
+        }
+        const fecharecupEl = document.getElementById('modal-utilizado-fecharecup');
+        if (fecharecupEl) fecharecupEl.textContent = valor === 'Recuperado' ? formatDateDDMMYYYY(new Date().toISOString().slice(0, 10)) : '—';
+        showFeedback(valor === 'Recuperado' ? 'Marcado como Recuperado' : 'Marcado como Pendiente', 'success');
+        const row = document.querySelector(`#utilizados-list tr[data-id="${item.id}"]`);
+        if (row) {
+          const tc = row.querySelector('td:last-child');
+          if (tc) tc.textContent = valor === 'Recuperado' ? formatDateDDMMYYYY(new Date().toISOString().slice(0, 10)) : '-';
+          const sel = row.querySelector('.select-recuperado');
+          if (sel) sel.value = valor;
+        }
+      } catch (err) {
+        showFeedback(err.message, 'error');
+        e.target.value = prevVal;
+      }
+    });
+  }
+}
+
+function closeModalUtilizadoDetalle() {
+  const overlay = document.getElementById('modal-utilizado-detalle');
+  if (overlay) overlay.classList.add('hidden');
+}
+
 // =============================================================================
 // Fabricantes
 // =============================================================================
@@ -1014,7 +1087,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       const recup = r.recuperado || 'Pendiente';
       const fecharecup = r.fecharecup ? formatDateDDMMYYYY(r.fecharecup) : '-';
       return `
-      <tr class="registro-utilizado-row" data-id="${r.id}" data-codigo="${escapeHtml(r.codigo)}" tabindex="0" role="button">
+      <tr class="registro-utilizado-row" data-id="${r.id}" tabindex="0" role="button">
         <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
         <td>${escapeHtml(r.codigo)}</td>
         <td>${escapeHtml(r.nombre || '')}</td>
@@ -1083,22 +1156,12 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   });
 
   container.querySelectorAll('.registro-utilizado-row').forEach(row => {
-    row.addEventListener('click', async (e) => {
+    row.addEventListener('click', (e) => {
       if (e.target.closest('.select-recuperado')) return;
-      let codigo = row.dataset.codigo;
-      if (!codigo) return;
-      codigo = codigo.replace(/Z$/, ''); /* recambios usados guardan codigo con Z */
-      try {
-        const recambios = await api(`/recambios?codigo=${encodeURIComponent(codigo)}&limit=1`);
-        const recambio = recambios?.[0];
-        if (recambio) {
-          openDetalle(recambio.id);
-        } else {
-          showFeedback('Recambio no encontrado en el listado', 'error');
-        }
-      } catch (err) {
-        showFeedback(err.message, 'error');
-      }
+      const id = parseInt(row.dataset.id);
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      showModalUtilizadoDetalle(item);
     });
     row.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -1372,10 +1435,16 @@ async function init() {
   document.getElementById('modal-notificacion')?.addEventListener('click', e => {
     if (e.target.id === 'modal-notificacion') closeModalNotificacion();
   });
+  document.getElementById('btn-cerrar-modal-utilizado')?.addEventListener('click', closeModalUtilizadoDetalle);
+  document.getElementById('modal-utilizado-detalle')?.addEventListener('click', e => {
+    if (e.target.id === 'modal-utilizado-detalle') closeModalUtilizadoDetalle();
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      const modal = document.getElementById('modal-notificacion');
-      if (modal && !modal.classList.contains('hidden')) closeModalNotificacion();
+      const modalNotif = document.getElementById('modal-notificacion');
+      const modalUtil = document.getElementById('modal-utilizado-detalle');
+      if (modalUtil && !modalUtil.classList.contains('hidden')) closeModalUtilizadoDetalle();
+      else if (modalNotif && !modalNotif.classList.contains('hidden')) closeModalNotificacion();
     }
   });
 

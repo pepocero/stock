@@ -9,18 +9,13 @@ const SORT_COLUMNS = ['codigo', 'nombre', 'fabricante', 'cantidad', 'updated_at'
 /**
  * Lista recambios con filtros, búsqueda y ordenación
  */
-export async function listRecambios(db, { fabricante, search, codigo, sortBy, sortOrder, limit = 100, offset = 0 } = {}) {
+export async function listRecambios(db, { fabricante, search, sortBy, sortOrder, limit = 100, offset = 0 } = {}) {
   let query = 'SELECT * FROM recambios WHERE 1=1';
   const params = [];
 
   if (fabricante) {
     query += ' AND fabricante = ?';
     params.push(fabricante);
-  }
-
-  if (codigo && codigo.trim()) {
-    query += ' AND codigo = ?';
-    params.push(codigo.trim());
   }
 
   if (search && search.trim()) {
