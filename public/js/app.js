@@ -1294,18 +1294,18 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
     i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
   ]);
   const tableHtml = `
-    <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:#fff;padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
-      <h3 style="margin:0 0 1rem;font-size:1.1rem;">${escapeHtml(titulo)}</h3>
-      <table style="border-collapse:collapse;width:100%;">
+    <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:#fff;color:#1f2933;padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
+      <h3 style="margin:0 0 1rem;font-size:1.1rem;color:#1f2933;">${escapeHtml(titulo)}</h3>
+      <table style="border-collapse:collapse;width:100%;color:#1f2933;">
         <thead>
           <tr>
-            ${headers.map(h => `<th style="border:1px solid #ccc;padding:6px 10px;text-align:left;background:#f0f0f0;">${escapeHtml(h)}</th>`).join('')}
+            ${headers.map(h => `<th style="border:1px solid #333;padding:6px 10px;text-align:left;background:#e2e8f0;color:#1f2933;font-weight:600;">${escapeHtml(h)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
             <tr>
-              ${r.map(c => `<td style="border:1px solid #ccc;padding:6px 10px;">${escapeHtml(String(c))}</td>`).join('')}
+              ${r.map(c => `<td style="border:1px solid #ccc;padding:6px 10px;color:#1f2933;">${escapeHtml(String(c))}</td>`).join('')}
             </tr>
           `).join('')}
         </tbody>
