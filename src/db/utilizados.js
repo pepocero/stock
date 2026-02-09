@@ -13,18 +13,42 @@ export async function insertUtilizado(db, { fecha, codigo, cantidad, nombre, rec
 
 export async function getUtilizadoById(db, id) {
   const result = await db.prepare(`
-    SELECT id, fecha, codigo, cantidad, nombre, recuperado, fecharecup, created_at
-    FROM utilizados WHERE id = ?
+    SELECT u.id, u.fecha, u.codigo, u.cantidad, u.nombre, COALESCE(r.alias, '') as alias, u.recuperado, u.fecharecup, u.created_at
+    FROM utilizados u
+    LEFT JOIN recambios r ON u.codigo = r.codigo
+    WHERE u.id = ?
   `).bind(id).first();
   return result || null;
 }
 
-export async function listUtilizados(db) {
-  const result = await db.prepare(`
-    SELECT id, fecha, codigo, cantidad, nombre, recuperado, fecharecup, created_at
-    FROM utilizados
-    ORDER BY fecha DESC, created_at DESC
-  `).all();
+export async function listUtilizados(db, filters = {}) {
+  let query = `SELECT u.id, u.fecha, u.codigo, u.cantidad, u.nombre, COALESCE(r.alias, '') as alias, u.recuperado, u.fecharecup, u.created_at
+    FROM utilizados u
+    LEFT JOIN recambios r ON u.codigo = r.codigo
+    WHERE 1=1`;
+  const params = [];
+
+  if (filters.recuperado) {
+    query += ' AND u.recuperado = ?';
+    params.push(filters.recuperado === 'Recuperado' ? 'Recuperado' : 'Pendiente');
+  }
+  if (filters.fecha) {
+    query += ' AND u.fecha = ?';
+    params.push(filters.fecha);
+  }
+  if (filters.fechaDesde) {
+    query += ' AND u.fecha >= ?';
+    params.push(filters.fechaDesde);
+  }
+  if (filters.fechaHasta) {
+    query += ' AND fecha <= ?';
+    params.push(filters.fechaHasta);
+  }
+
+  query += ' ORDER BY u.fecha DESC, u.created_at DESC';
+  const result = params.length
+    ? await db.prepare(query).bind(...params).all()
+    : await db.prepare(query).all();
   return result.results || [];
 }
 

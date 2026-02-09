@@ -10,6 +10,7 @@ const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
 let utilizadosData = [];
+let pendientesData = [];
 let recuperadosData = [];
 let deferredInstallPrompt = null;
 let backHandler = null;
@@ -249,6 +250,7 @@ const VIEW_TITLES = {
   importar: 'Importar',
   fabricantes: 'Fabricantes',
   utilizados: 'Recambios Utilizados',
+  pendientes: 'Pendientes',
   campos: 'Campos adicionales'
 };
 
@@ -1353,11 +1355,12 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
   const border = isDark ? '#3d424d' : '#ccc';
   const borderHeader = isDark ? '#3d424d' : '#333';
 
-  const headers = ['Fecha', 'Código', 'Nombre', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
+  const headers = ['Fecha', 'Código', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
   const rows = items.map(i => [
     formatDateDDMMYYYY(i.fecha),
     i.codigo,
     i.nombre || '',
+    i.alias || '',
     i.cantidad,
     i.recuperado || 'Pendiente',
     i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
@@ -1444,10 +1447,10 @@ function exportarRegistrosExcel(titulo, items, tipo = '') {
     return;
   }
   const isUtilizados = tipo === 'utilizados';
-  const headers = isUtilizados ? ['Fecha', 'Codigo', 'Nombre', 'Cantidad', 'Recuperado', 'Fecha Recup.'] : ['Fecha', 'Codigo', 'Nombre', 'Cantidad'];
+  const headers = isUtilizados ? ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'] : ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad'];
   const rows = isUtilizados
-    ? items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''])
-    : items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.cantidad]);
+    ? items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''])
+    : items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad]);
   const data = [[titulo], headers, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -1474,6 +1477,62 @@ function renderUtilizadosView() {
   const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
   renderRegistrosPorFecha('utilizados-list', filtered, 'utilizados', 'Recambios Utilizados');
   updateExportarSeleccionadosBtn('utilizados');
+}
+
+function buildPendientesUrl() {
+  const fecha = document.getElementById('pendientes-fecha')?.value?.trim();
+  const fechaDesde = document.getElementById('pendientes-fecha-desde')?.value?.trim();
+  const fechaHasta = document.getElementById('pendientes-fecha-hasta')?.value?.trim();
+  const params = new URLSearchParams();
+  params.set('recuperado', 'Pendiente');
+  if (fecha) params.set('fecha', fecha);
+  if (fechaDesde) params.set('fechaDesde', fechaDesde);
+  if (fechaHasta) params.set('fechaHasta', fechaHasta);
+  return `/utilizados?${params.toString()}`;
+}
+
+function renderPendientesView(items) {
+  const container = document.getElementById('pendientes-list');
+  if (!container) return;
+  const btnExportar = document.getElementById('btn-exportar-pendientes');
+  if (items.length === 0) {
+    container.innerHTML = '<p class="empty-state">No hay registros pendientes con los filtros seleccionados.</p>';
+    if (btnExportar) btnExportar.classList.add('hidden');
+    return;
+  }
+  const headers = ['Fecha', 'Código', 'Nombre', 'Cantidad'];
+  const rows = items.map(r => `
+    <tr>
+      <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
+      <td>${escapeHtml(r.codigo)}</td>
+      <td>${escapeHtml(r.nombre || '')}</td>
+      <td>${r.cantidad}</td>
+    </tr>
+  `).join('');
+  container.innerHTML = `
+    <div class="table-container registro-table-wrap">
+      <table class="data-table registro-table">
+        <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  if (btnExportar) {
+    btnExportar.classList.remove('hidden');
+    btnExportar.textContent = `Exportar (${items.length})`;
+  }
+}
+
+async function loadPendientesView() {
+  const container = document.getElementById('pendientes-list');
+  container.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    pendientesData = await api(buildPendientesUrl());
+    renderPendientesView(pendientesData);
+  } catch (err) {
+    container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
+    document.getElementById('btn-exportar-pendientes')?.classList.add('hidden');
+  }
 }
 
 async function loadUtilizados() {
@@ -1571,6 +1630,7 @@ async function init() {
       showView(tab.dataset.view);
       if (tab.dataset.view === 'fabricantes') loadFabricantesView();
       if (tab.dataset.view === 'utilizados') loadUtilizados();
+      if (tab.dataset.view === 'pendientes') loadPendientesView();
     });
   });
 
@@ -1609,6 +1669,28 @@ async function init() {
         e.preventDefault();
         renderUtilizadosView();
       }
+    });
+  }
+
+  document.getElementById('btn-pendientes-buscar')?.addEventListener('click', loadPendientesView);
+  document.getElementById('btn-pendientes-limpiar')?.addEventListener('click', () => {
+    document.getElementById('pendientes-fecha').value = '';
+    document.getElementById('pendientes-fecha-desde').value = '';
+    document.getElementById('pendientes-fecha-hasta').value = '';
+    pendientesData = [];
+    renderPendientesView([]);
+    document.getElementById('btn-exportar-pendientes')?.classList.add('hidden');
+  });
+  const btnExportarPendientes = document.getElementById('btn-exportar-pendientes');
+  if (btnExportarPendientes) {
+    btnExportarPendientes.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!pendientesData.length) return;
+      showExportarPortal(
+        btnExportarPendientes,
+        () => exportarRegistrosExcel('Recambios Pendientes', pendientesData, 'utilizados'),
+        () => exportarRegistrosImagen('Recambios Pendientes', pendientesData, 'utilizados')
+      );
     });
   }
 

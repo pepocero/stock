@@ -1034,10 +1034,39 @@ body {
   gap: 1rem;
 }
 
-.registros-filters {
+.registros-filters,
+.pendientes-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 0.25rem;
+  align-items: flex-end;
+}
+
+.pendientes-filters .filters-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pendientes-filters .filters-row label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pendientes-filters .input-fecha {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  min-width: 140px;
+}
+
+.pendientes-filters .input-fecha:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .registros-filters .filter-search {

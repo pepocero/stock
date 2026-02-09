@@ -28,7 +28,17 @@ export async function handleUtilizados(request, env) {
   if (!hasPermission('read', {})) return error('No autorizado', 403);
 
   if (method === 'GET') {
-    const items = await utilizadosDb.listUtilizados(env.DB);
+    const url = new URL(request.url);
+    const filters = {};
+    const recuperado = url.searchParams.get('recuperado');
+    if (recuperado) filters.recuperado = recuperado;
+    const fecha = url.searchParams.get('fecha');
+    if (fecha) filters.fecha = fecha;
+    const fechaDesde = url.searchParams.get('fechaDesde');
+    if (fechaDesde) filters.fechaDesde = fechaDesde;
+    const fechaHasta = url.searchParams.get('fechaHasta');
+    if (fechaHasta) filters.fechaHasta = fechaHasta;
+    const items = await utilizadosDb.listUtilizados(env.DB, Object.keys(filters).length ? filters : undefined);
     return json(items);
   }
 

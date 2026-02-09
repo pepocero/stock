@@ -39,6 +39,7 @@
         <button class="tab sidebar-link" data-view="importar">Importar</button>
         <button class="tab sidebar-link" data-view="fabricantes">Fabricantes</button>
         <button class="tab sidebar-link" data-view="utilizados">Recambios Utilizados</button>
+        <button class="tab sidebar-link" data-view="pendientes">Pendientes</button>
       </nav>
       <div class="sidebar-footer">
         <button type="button" id="btn-instalar-app" class="btn btn-primary sidebar-install hidden">
@@ -170,6 +171,34 @@
             <input type="text" id="nuevo-fabricante-nombre" placeholder="Nombre del fabricante (ej: Azkoyen, Jofemar)">
             <button type="button" id="btn-add-fabricante" class="btn btn-primary">Añadir fabricante</button>
           </div>
+        </div>
+      </section>
+
+      <!-- Vista: Pendientes -->
+      <section id="view-pendientes" class="view">
+        <div class="registros-section">
+          <div class="pendientes-filters">
+            <div class="filters-row">
+              <label for="pendientes-fecha">Fecha exacta</label>
+              <input type="date" id="pendientes-fecha" class="input-fecha">
+            </div>
+            <div class="filters-row">
+              <label for="pendientes-fecha-desde">Desde</label>
+              <input type="date" id="pendientes-fecha-desde" class="input-fecha">
+            </div>
+            <div class="filters-row">
+              <label for="pendientes-fecha-hasta">Hasta</label>
+              <input type="date" id="pendientes-fecha-hasta" class="input-fecha">
+            </div>
+            <button type="button" id="btn-pendientes-buscar" class="btn btn-primary btn-sm">Buscar</button>
+            <button type="button" id="btn-pendientes-limpiar" class="btn btn-secondary btn-sm">Limpiar</button>
+          </div>
+          <div class="registros-toolbar">
+            <div class="exportar-dropdown-wrapper" id="exportar-pendientes-wrapper">
+              <button type="button" id="btn-exportar-pendientes" class="btn btn-primary btn-sm hidden">Exportar</button>
+            </div>
+          </div>
+          <div id="pendientes-list" class="pendientes-list"></div>
         </div>
       </section>
 

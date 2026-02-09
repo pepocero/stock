@@ -180,12 +180,18 @@ export async function importarRecambios(db, items) {
       codigo = `IMP-${batchId}-${i}`;
     }
 
+    const cantidadRaw = item.cantidad;
+    const cantidadNum = parseInt(cantidadRaw, 10);
+    const cantidad = (cantidadRaw === undefined || cantidadRaw === null || String(cantidadRaw).trim() === '')
+      ? 20
+      : (isNaN(cantidadNum) ? 20 : Math.max(0, cantidadNum));
+
     const data = {
       fabricante,
       codigo,
       nombre: (item.nombre || '').toString().trim() || '',
       alias: (item.alias || '').toString().trim() || '',
-      cantidad: parseInt(item.cantidad, 10) || 0
+      cantidad
     };
 
     const existe = await recambiosDb.existsCodigo(db, data.codigo);
