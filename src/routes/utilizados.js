@@ -84,7 +84,7 @@ export async function handleUtilizadoById(request, env, id) {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'PATCH, OPTIONS',
+        'Access-Control-Allow-Methods': 'PATCH, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Max-Age': '86400'
       }
@@ -94,6 +94,13 @@ export async function handleUtilizadoById(request, env, id) {
   const authResult = authMiddleware(request, env);
   if (authResult) return authResult;
   if (!hasPermission('write', {})) return error('No autorizado', 403);
+
+  if (method === 'DELETE') {
+    const deleted = await utilizadosDb.deleteUtilizadoById(env.DB, utilId);
+    if (!deleted) return error('Registro no encontrado', 404);
+    return json({ ok: true });
+  }
+
   if (method !== 'PATCH') return error('Método no permitido', 405);
 
   let body;

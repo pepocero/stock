@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.05';
+const APP_VERSION = '1.1.06';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -704,6 +704,7 @@ function showModalUtilizadoDetalle(item) {
       <select class="select-recuperado modal-utilizado-select" data-id="${item.id}" title="Estado de recuperación">
         <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
         <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
+        <option value="Eliminar">Eliminar</option>
       </select>
     </div>
     <div class="modal-utilizado-item">
@@ -719,6 +720,25 @@ function showModalUtilizadoDetalle(item) {
     sel.addEventListener('change', async (e) => {
       const valor = e.target.value;
       const prevVal = utilizadosData.find(u => u.id === item.id)?.recuperado || 'Pendiente';
+
+      if (valor === 'Eliminar') {
+        if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) {
+          e.target.value = prevVal;
+          return;
+        }
+        try {
+          await api(`/utilizados/${item.id}`, { method: 'DELETE' });
+          utilizadosData = utilizadosData.filter(u => u.id !== item.id);
+          showFeedback('Registro eliminado', 'success');
+          closeModalUtilizadoDetalle();
+          removeUtilizadoRowFromDOM(item.id);
+        } catch (err) {
+          showFeedback(err.message, 'error');
+          e.target.value = prevVal;
+        }
+        return;
+      }
+
       try {
         await api(`/utilizados/${item.id}`, { method: 'PATCH', body: { recuperado: valor } });
         const u = utilizadosData.find(u => u.id === item.id);
@@ -733,8 +753,8 @@ function showModalUtilizadoDetalle(item) {
         if (row) {
           const tc = row.querySelector('td:last-child');
           if (tc) tc.textContent = valor === 'Recuperado' ? formatDateDDMMYYYY(new Date().toISOString().slice(0, 10)) : '-';
-          const sel = row.querySelector('.select-recuperado');
-          if (sel) sel.value = valor;
+          const rowSel = row.querySelector('.select-recuperado');
+          if (rowSel) rowSel.value = valor;
         }
       } catch (err) {
         showFeedback(err.message, 'error');
@@ -1096,6 +1116,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
           <select class="select-recuperado" data-id="${r.id}" title="Estado de recuperación">
             <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
             <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
+            <option value="Eliminar">Eliminar</option>
           </select>
         </td>
         <td>${escapeHtml(fecharecup)}</td>
@@ -1183,6 +1204,24 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       const id = parseInt(e.target.dataset.id);
       const valor = e.target.value;
       const prevVal = utilizadosData.find(u => u.id === id)?.recuperado || 'Pendiente';
+
+      if (valor === 'Eliminar') {
+        if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) {
+          e.target.value = prevVal;
+          return;
+        }
+        try {
+          await api(`/utilizados/${id}`, { method: 'DELETE' });
+          utilizadosData = utilizadosData.filter(u => u.id !== id);
+          showFeedback('Registro eliminado', 'success');
+          removeUtilizadoRowFromDOM(id);
+        } catch (err) {
+          showFeedback(err.message, 'error');
+          e.target.value = prevVal;
+        }
+        return;
+      }
+
       try {
         await api(`/utilizados/${id}`, { method: 'PATCH', body: { recuperado: valor } });
         const item = utilizadosData.find(u => u.id === id);
@@ -1250,6 +1289,29 @@ function showExportarPortal(anchorEl, onExcel, onImagen) {
   setTimeout(() => document.addEventListener('click', clickOutside), 0);
 }
 
+function removeUtilizadoRowFromDOM(id) {
+  const container = document.getElementById('utilizados-list');
+  if (!container) return;
+  const row = container.querySelector(`tr[data-id="${id}"]`);
+  if (!row) return;
+  const group = row.closest('.registro-fecha-group');
+  row.remove();
+  if (!group) return;
+  const tbody = group.querySelector('tbody');
+  const remaining = tbody ? tbody.querySelectorAll('tr').length : 0;
+  if (remaining <= 0) {
+    group.remove();
+    if (!container.querySelector('.registro-fecha-group')) {
+      container.innerHTML = '<p class="empty-state">No hay registros.</p>';
+    }
+  } else {
+    const countEl = group.querySelector('.registro-fecha-count');
+    if (countEl) {
+      countEl.textContent = `(${remaining} registro${remaining !== 1 ? 's' : ''})`;
+    }
+  }
+}
+
 function updateExportarSeleccionadosBtn(tipo) {
   const checked = document.querySelectorAll(`.registro-fecha-checkbox[data-tipo="${tipo}"]:checked`);
   const visible = checked.length > 0;
@@ -1284,6 +1346,13 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
     showFeedback('Librería de captura no cargada', 'error');
     return;
   }
+  const isDark = document.body.classList.contains('theme-dark');
+  const bg = isDark ? '#1a1d23' : '#fff';
+  const text = isDark ? '#e8eaed' : '#1f2933';
+  const headerBg = isDark ? '#2d3139' : '#e2e8f0';
+  const border = isDark ? '#3d424d' : '#ccc';
+  const borderHeader = isDark ? '#3d424d' : '#333';
+
   const headers = ['Fecha', 'Código', 'Nombre', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
   const rows = items.map(i => [
     formatDateDDMMYYYY(i.fecha),
@@ -1294,18 +1363,18 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
     i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
   ]);
   const tableHtml = `
-    <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:#fff;color:#1f2933;padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
-      <h3 style="margin:0 0 1rem;font-size:1.1rem;color:#1f2933;">${escapeHtml(titulo)}</h3>
-      <table style="border-collapse:collapse;width:100%;color:#1f2933;">
+    <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:${bg};color:${text};padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
+      <h3 style="margin:0 0 1rem;font-size:1.1rem;color:${text};">${escapeHtml(titulo)}</h3>
+      <table style="border-collapse:collapse;width:100%;color:${text};">
         <thead>
           <tr>
-            ${headers.map(h => `<th style="border:1px solid #333;padding:6px 10px;text-align:left;background:#e2e8f0;color:#1f2933;font-weight:600;">${escapeHtml(h)}</th>`).join('')}
+            ${headers.map(h => `<th style="border:1px solid ${borderHeader};padding:6px 10px;text-align:left;background:${headerBg};color:${text};font-weight:600;">${escapeHtml(h)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
             <tr>
-              ${r.map(c => `<td style="border:1px solid #ccc;padding:6px 10px;color:#1f2933;">${escapeHtml(String(c))}</td>`).join('')}
+              ${r.map(c => `<td style="border:1px solid ${border};padding:6px 10px;color:${text};">${escapeHtml(String(c))}</td>`).join('')}
             </tr>
           `).join('')}
         </tbody>
@@ -1322,7 +1391,7 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: isDark ? '#1a1d23' : '#ffffff'
     });
     document.body.removeChild(tempEl);
 

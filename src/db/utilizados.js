@@ -46,3 +46,8 @@ export async function deleteByFechas(db, fechas) {
   ).bind(...fechas).run();
   return result.meta.changes || 0;
 }
+
+export async function deleteUtilizadoById(db, id) {
+  const result = await db.prepare('DELETE FROM utilizados WHERE id = ?').bind(id).run();
+  return result.meta.changes > 0;
+}
