@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.16';
+const APP_VERSION = '1.1.17';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
