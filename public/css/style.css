@@ -694,6 +694,7 @@ body {
 .modal-utilizado-detalle-content {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
   margin: 0 0 1.25rem;
 }
@@ -701,7 +702,9 @@ body {
 .modal-utilizado-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.25rem;
+  width: 100%;
 }
 
 .modal-utilizado-label {
@@ -713,11 +716,13 @@ body {
 .modal-utilizado-value {
   font-size: 1rem;
   color: var(--text);
+  text-align: center;
 }
 
 .modal-utilizado-select {
   width: 100%;
   max-width: 200px;
+  margin: 0 auto;
 }
 
 /* Error message (legacy/inline) */
@@ -1131,13 +1136,25 @@ body {
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text-muted);
+  color: var(--danger);
   font-size: 1rem;
 }
 
 .billeteros-table .btn-trash:hover {
   color: var(--danger);
   background: rgba(234, 67, 53, 0.15);
+}
+
+.billeteros-table tbody tr.registro-billetero-row {
+  cursor: pointer;
+}
+
+.billeteros-table tbody tr.registro-billetero-row:hover {
+  background: rgba(74, 158, 255, 0.08);
+}
+
+.billeteros-table tbody tr.registro-billetero-row:active {
+  background: rgba(74, 158, 255, 0.15);
 }
 
 .registros-filters .filter-search {
@@ -1178,12 +1195,26 @@ body {
 
 .registro-fecha-header {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
   background: var(--bg-input);
   transition: background 0.2s;
+}
+
+.registro-fecha-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registro-fecha-pendientes-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  cursor: default;
 }
 
 .registro-fecha-header:hover {

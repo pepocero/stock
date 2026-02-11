@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.10';
+const APP_VERSION = '1.1.12';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -700,6 +700,10 @@ function showModalUtilizadoDetalle(item) {
       <span class="modal-utilizado-value">${escapeHtml(item.nombre || '—')}</span>
     </div>
     <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Alias</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.alias || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
       <span class="modal-utilizado-label">Cantidad</span>
       <span class="modal-utilizado-value">${item.cantidad}</span>
     </div>
@@ -770,6 +774,61 @@ function showModalUtilizadoDetalle(item) {
 
 function closeModalUtilizadoDetalle() {
   const overlay = document.getElementById('modal-utilizado-detalle');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function showModalBilleteroDetalle(item) {
+  const overlay = document.getElementById('modal-billetero-detalle');
+  const content = document.getElementById('modal-billetero-detalle-content');
+  if (!overlay || !content) return;
+  content.innerHTML = `
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Fecha</span>
+      <span class="modal-utilizado-value">${escapeHtml(formatDateDDMMYYYY(item.fecha))}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Bar</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.bar || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Billetero Retirado</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.billetero_retirado || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Serie Retirado</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.serie_retirado || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Billetero Suplente</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.billetero_suplente || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Serie Suplente</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.serie_suplente || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Recuperado</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.recuperado ? (item.recuperado === 'si' ? 'Sí' : 'No') : '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Pendiente</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.pendiente ? (item.pendiente === 'si' ? 'Sí' : 'No') : '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Otro Billetero</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.otro_billetero || '—')}</span>
+    </div>
+    <div class="modal-utilizado-item">
+      <span class="modal-utilizado-label">Serie Otro</span>
+      <span class="modal-utilizado-value">${escapeHtml(item.serie_otro || '—')}</span>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  overlay.querySelector('#btn-cerrar-modal-billetero')?.focus();
+}
+
+function closeModalBilleteroDetalle() {
+  const overlay = document.getElementById('modal-billetero-detalle');
   if (overlay) overlay.classList.add('hidden');
 }
 
@@ -1134,18 +1193,20 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
     return `
       <div class="registro-fecha-group" data-fecha="${fecha}">
         <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
-          <span class="registro-fecha-toggle">▶</span>
-          <span class="registro-fecha-label">${escapeHtml(fechaLabel)}</span>
-          <div class="registro-fecha-actions">
-            ${tipo === 'utilizados' ? `<span class="registro-check-label">Pendientes</span><input type="checkbox" class="registro-fecha-checkbox-pendientes" data-fecha="${fecha}" data-tipo="${tipo}" data-solo-pendientes="true" onclick="event.stopPropagation()" title="Solo pendientes">` : ''}
-            <span class="registro-fecha-count registro-check-label">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
-            <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
-            <div class="exportar-dropdown-wrapper">
-              <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
+          <div class="registro-fecha-header-main">
+            <span class="registro-fecha-toggle">▶</span>
+            <span class="registro-fecha-label">${escapeHtml(fechaLabel)}</span>
+            <div class="registro-fecha-actions">
+              <span class="registro-fecha-count registro-check-label">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
+              <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
+              <div class="exportar-dropdown-wrapper">
+                <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
+              </div>
             </div>
           </div>
         </div>
         <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
+          ${tipo === 'utilizados' ? `<div class="registro-fecha-pendientes-row" onclick="event.stopPropagation()"><span class="registro-check-label">Pendientes</span><input type="checkbox" class="registro-fecha-checkbox-pendientes" data-fecha="${fecha}" data-tipo="${tipo}" data-solo-pendientes="true" title="Solo pendientes"></div>` : ''}
           <div class="table-container registro-table-wrap">
             <table class="data-table registro-table">
               ${thead}
@@ -1190,7 +1251,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   container.querySelectorAll('.registro-fecha-checkbox').forEach(cb => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
-        const pendientes = e.target.closest('.registro-fecha-actions')?.querySelector('.registro-fecha-checkbox-pendientes');
+        const pendientes = e.target.closest('.registro-fecha-group')?.querySelector('.registro-fecha-checkbox-pendientes');
         if (pendientes?.checked) pendientes.checked = false;
       }
       updateExportarSeleccionadosBtn(tipo);
@@ -1199,7 +1260,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   container.querySelectorAll('.registro-fecha-checkbox-pendientes').forEach(cb => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
-        const other = e.target.closest('.registro-fecha-actions')?.querySelector('.registro-fecha-checkbox');
+        const other = e.target.closest('.registro-fecha-group')?.querySelector('.registro-fecha-checkbox');
         if (other?.checked) other.checked = false;
       }
       updateExportarSeleccionadosBtn(tipo);
@@ -1623,7 +1684,7 @@ function renderBilleterosView(items) {
     const selRecup = `<select class="select-billetero" data-id="${b.id}" data-field="recuperado" data-value="${escapeHtml(b.recuperado || '')}">${BILLETERO_RECUPERADO_OPTS.map(o => `<option value="${o.v}" ${(b.recuperado || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('')}</select>`;
     const selPend = `<select class="select-billetero" data-id="${b.id}" data-field="pendiente" data-value="${escapeHtml(b.pendiente || '')}">${BILLETERO_PENDIENTE_OPTS.map(o => `<option value="${o.v}" ${(b.pendiente || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('')}</select>`;
     return `
-      <tr data-id="${b.id}">
+      <tr class="registro-billetero-row" data-id="${b.id}" tabindex="0" role="button">
         <td>${escapeHtml(formatDateDDMMYYYY(b.fecha))}</td>
         <td>${escapeHtml(b.bar || '')}</td>
         <td>${escapeHtml(b.billetero_retirado || '')}</td>
@@ -1650,6 +1711,21 @@ function renderBilleterosView(items) {
     btnExportar.classList.remove('hidden');
     btnExportar.textContent = `Exportar (${items.length})`;
   }
+  container.querySelectorAll('.registro-billetero-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.select-billetero') || e.target.closest('.btn-trash')) return;
+      const id = parseInt(row.dataset.id);
+      const item = billeterosData.find(b => b.id === id);
+      if (item) showModalBilleteroDetalle(item);
+    });
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!e.target.closest('.select-billetero') && !e.target.closest('.btn-trash')) row.click();
+      }
+    });
+  });
+
   container.querySelectorAll('.btn-trash').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -1999,11 +2075,17 @@ async function init() {
   document.getElementById('modal-utilizado-detalle')?.addEventListener('click', e => {
     if (e.target.id === 'modal-utilizado-detalle') closeModalUtilizadoDetalle();
   });
+  document.getElementById('btn-cerrar-modal-billetero')?.addEventListener('click', closeModalBilleteroDetalle);
+  document.getElementById('modal-billetero-detalle')?.addEventListener('click', e => {
+    if (e.target.id === 'modal-billetero-detalle') closeModalBilleteroDetalle();
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       const modalNotif = document.getElementById('modal-notificacion');
       const modalUtil = document.getElementById('modal-utilizado-detalle');
-      if (modalUtil && !modalUtil.classList.contains('hidden')) closeModalUtilizadoDetalle();
+      const modalBilletero = document.getElementById('modal-billetero-detalle');
+      if (modalBilletero && !modalBilletero.classList.contains('hidden')) closeModalBilleteroDetalle();
+      else if (modalUtil && !modalUtil.classList.contains('hidden')) closeModalUtilizadoDetalle();
       else if (modalNotif && !modalNotif.classList.contains('hidden')) closeModalNotificacion();
     }
   });
