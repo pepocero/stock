@@ -725,6 +725,47 @@ body {
   margin: 0 auto;
 }
 
+/* Modal detalle billetero editable */
+.modal-billetero-detalle-box {
+  max-width: 480px;
+}
+
+.modal-billetero-form .modal-utilizado-item {
+  width: 100%;
+}
+
+.modal-billetero-input {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.modal-billetero-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-billetero-textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.modal-billetero-select {
+  cursor: pointer;
+}
+
+.modal-billetero-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
 /* Error message (legacy/inline) */
 .error-msg {
   background: rgba(234, 67, 53, 0.15);

@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.14';
+const APP_VERSION = '1.1.15';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -777,54 +777,94 @@ function closeModalUtilizadoDetalle() {
   if (overlay) overlay.classList.add('hidden');
 }
 
+const BILLETERO_SELECT_OPTS = [{ v: '', l: '--' }, { v: 'Lithos', l: 'Lithos' }, { v: 'NV9', l: 'NV9' }, { v: 'BT11', l: 'BT11' }, { v: 'BT10', l: 'BT10' }];
+
 function showModalBilleteroDetalle(item) {
   const overlay = document.getElementById('modal-billetero-detalle');
   const content = document.getElementById('modal-billetero-detalle-content');
   if (!overlay || !content) return;
+  const selBilletero = (key) => BILLETERO_SELECT_OPTS.map(o => `<option value="${o.v}" ${(item[key] || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('');
+  const selRecup = BILLETERO_RECUPERADO_OPTS.map(o => `<option value="${o.v}" ${(item.recuperado || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('');
+  const selPend = BILLETERO_PENDIENTE_OPTS.map(o => `<option value="${o.v}" ${(item.pendiente || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('');
   content.innerHTML = `
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Fecha</span>
-      <span class="modal-utilizado-value">${escapeHtml(formatDateDDMMYYYY(item.fecha))}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Bar</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.bar || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Billetero Retirado</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.billetero_retirado || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Serie Retirado</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.serie_retirado || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Billetero Suplente</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.billetero_suplente || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Serie Suplente</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.serie_suplente || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Recuperado</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.recuperado ? (item.recuperado === 'si' ? 'Sí' : 'No') : '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Pendiente</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.pendiente ? (item.pendiente === 'si' ? 'Sí' : 'No') : '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Otro Billetero</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.otro_billetero || '—')}</span>
-    </div>
-    <div class="modal-utilizado-item">
-      <span class="modal-utilizado-label">Serie Otro</span>
-      <span class="modal-utilizado-value">${escapeHtml(item.serie_otro || '—')}</span>
-    </div>
+    <form id="form-billetero-detalle" class="modal-billetero-form">
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-fecha">Fecha</label>
+        <input type="date" id="modal-billetero-fecha" class="modal-billetero-input" value="${escapeHtml(item.fecha || '')}">
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-bar">Bar</label>
+        <textarea id="modal-billetero-bar" class="modal-billetero-input modal-billetero-textarea" rows="2">${escapeHtml(item.bar || '')}</textarea>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-retirado">Billetero Retirado</label>
+        <select id="modal-billetero-retirado" class="modal-billetero-input modal-billetero-select">${selBilletero('billetero_retirado')}</select>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-serie-retirado">Serie Retirado</label>
+        <input type="text" id="modal-billetero-serie-retirado" class="modal-billetero-input" value="${escapeHtml(item.serie_retirado || '')}">
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-suplente">Billetero Suplente</label>
+        <select id="modal-billetero-suplente" class="modal-billetero-input modal-billetero-select">${selBilletero('billetero_suplente')}</select>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-serie-suplente">Serie Suplente</label>
+        <input type="text" id="modal-billetero-serie-suplente" class="modal-billetero-input" value="${escapeHtml(item.serie_suplente || '')}">
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-recuperado">Recuperado</label>
+        <select id="modal-billetero-recuperado" class="modal-billetero-input modal-billetero-select">${selRecup}</select>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-pendiente">Pendiente</label>
+        <select id="modal-billetero-pendiente" class="modal-billetero-input modal-billetero-select">${selPend}</select>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-otro">Otro Billetero</label>
+        <select id="modal-billetero-otro" class="modal-billetero-input modal-billetero-select">${selBilletero('otro_billetero')}</select>
+      </div>
+      <div class="modal-utilizado-item">
+        <label class="modal-utilizado-label" for="modal-billetero-serie-otro">Serie Otro</label>
+        <input type="text" id="modal-billetero-serie-otro" class="modal-billetero-input" value="${escapeHtml(item.serie_otro || '')}">
+      </div>
+      <div class="modal-billetero-actions">
+        <button type="submit" class="btn btn-danger">Guardar</button>
+      </div>
+    </form>
   `;
   overlay.classList.remove('hidden');
-  overlay.querySelector('#btn-cerrar-modal-billetero')?.focus();
+  overlay.querySelector('#modal-billetero-fecha')?.focus();
+
+  content.querySelector('#form-billetero-detalle').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fecha = document.getElementById('modal-billetero-fecha').value?.trim();
+    if (!fecha) {
+      showFeedback('La fecha es obligatoria', 'error');
+      return;
+    }
+    const payload = {
+      fecha,
+      bar: document.getElementById('modal-billetero-bar').value?.trim() || null,
+      billetero_retirado: document.getElementById('modal-billetero-retirado').value || null,
+      serie_retirado: document.getElementById('modal-billetero-serie-retirado').value?.trim() || null,
+      billetero_suplente: document.getElementById('modal-billetero-suplente').value || null,
+      serie_suplente: document.getElementById('modal-billetero-serie-suplente').value?.trim() || null,
+      recuperado: document.getElementById('modal-billetero-recuperado').value || null,
+      pendiente: document.getElementById('modal-billetero-pendiente').value || null,
+      otro_billetero: document.getElementById('modal-billetero-otro').value || null,
+      serie_otro: document.getElementById('modal-billetero-serie-otro').value?.trim() || null
+    };
+    try {
+      await api(`/billeteros/${item.id}`, { method: 'PATCH', body: payload });
+      const b = billeterosData.find(x => x.id === item.id);
+      if (b) Object.assign(b, payload);
+      renderBilleterosView(billeterosData);
+      showFeedback('Cambios guardados', 'success');
+    } catch (err) {
+      showFeedback(err.message || 'Error al guardar', 'error');
+    }
+  });
 }
 
 function closeModalBilleteroDetalle() {

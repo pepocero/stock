@@ -51,14 +51,14 @@ export async function listBilleteros(db, filters = {}) {
 }
 
 export async function updateBilletero(db, id, data) {
-  const allowed = ['recuperado', 'pendiente'];
+  const allowed = ['fecha', 'bar', 'billetero_retirado', 'serie_retirado', 'billetero_suplente', 'serie_suplente', 'recuperado', 'pendiente', 'otro_billetero', 'serie_otro'];
   const updates = [];
   const values = [];
   for (const key of allowed) {
     if (data[key] !== undefined) {
       updates.push(`${key} = ?`);
       const v = data[key];
-      values.push((v === '' || v === null || v === undefined) ? null : v);
+      values.push((v === '' || v === null || v === undefined) ? null : String(v).trim() || null);
     }
   }
   if (updates.length === 0) return false;

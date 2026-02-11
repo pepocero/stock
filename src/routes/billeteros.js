@@ -105,16 +105,30 @@ export async function handleBilleteroById(request, env, id) {
 
   const validRecuperado = ['', null, 'si', 'no'];
   const validPendiente = ['', null, 'si', 'no'];
+  const validBilletero = ['', null, 'Lithos', 'NV9', 'BT11', 'BT10'];
   if (body.recuperado !== undefined && !validRecuperado.includes(body.recuperado)) {
     return error('recuperado: debe ser vacío, "si" o "no"', 400);
   }
   if (body.pendiente !== undefined && !validPendiente.includes(body.pendiente)) {
     return error('pendiente: debe ser vacío, "si" o "no"', 400);
   }
+  if (body.billetero_retirado !== undefined && body.billetero_retirado !== null && body.billetero_retirado !== '' && !validBilletero.includes(body.billetero_retirado)) {
+    return error('billetero_retirado: valor no válido', 400);
+  }
+  if (body.billetero_suplente !== undefined && body.billetero_suplente !== null && body.billetero_suplente !== '' && !validBilletero.includes(body.billetero_suplente)) {
+    return error('billetero_suplente: valor no válido', 400);
+  }
+  if (body.otro_billetero !== undefined && body.otro_billetero !== null && body.otro_billetero !== '' && !validBilletero.includes(body.otro_billetero)) {
+    return error('otro_billetero: valor no válido', 400);
+  }
 
   const updateData = {};
-  if (body.recuperado !== undefined) updateData.recuperado = body.recuperado === '' ? null : body.recuperado;
-  if (body.pendiente !== undefined) updateData.pendiente = body.pendiente === '' ? null : body.pendiente;
+  const fields = ['fecha', 'bar', 'billetero_retirado', 'serie_retirado', 'billetero_suplente', 'serie_suplente', 'recuperado', 'pendiente', 'otro_billetero', 'serie_otro'];
+  for (const k of fields) {
+    if (body[k] !== undefined) {
+      updateData[k] = (body[k] === '' || body[k] === null) ? null : body[k];
+    }
+  }
 
   const updated = await billeterosDb.updateBilletero(env.DB, billeteroId, updateData);
   if (!updated) return error('Registro no encontrado', 404);
