@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.17';
+const APP_VERSION = '1.1.18';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -1195,7 +1195,7 @@ function groupByDate(items) {
   return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
 }
 
-function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
+function renderRegistrosPorFecha(containerId, items, tipo, titulo, expandAll = false) {
   const container = document.getElementById(containerId);
   if (!items.length) {
     container.innerHTML = '<p class="empty-state">No hay registros.</p>';
@@ -1234,18 +1234,17 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       <div class="registro-fecha-group" data-fecha="${fecha}">
         <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
           <div class="registro-fecha-header-main">
-            <span class="registro-fecha-toggle">▶</span>
+            <span class="registro-fecha-toggle">${expandAll ? '▼' : '▶'}</span>
             <span class="registro-fecha-label">${escapeHtml(fechaLabel)}</span>
             <div class="registro-fecha-actions">
-              <span class="registro-fecha-count registro-check-label">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
-              <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
+              ${tipo === 'utilizados' ? `<span class="registro-fecha-checkbox-wrap hidden"><input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()"></span>` : `<input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">`}
               <div class="exportar-dropdown-wrapper">
                 <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
               </div>
             </div>
           </div>
         </div>
-        <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="display:none">
+        <div class="registro-fecha-body" id="${tipo}-body-${fechaId}" style="${expandAll ? 'display:block' : 'display:none'}">
           ${tipo === 'utilizados' ? `<div class="registro-fecha-pendientes-row" onclick="event.stopPropagation()"><span class="registro-check-label">Pendientes</span><input type="checkbox" class="registro-fecha-checkbox-pendientes" data-fecha="${fecha}" data-tipo="${tipo}" data-solo-pendientes="true" title="Solo pendientes"></div>` : ''}
           <div class="table-container registro-table-wrap">
             <table class="data-table registro-table">
@@ -1306,6 +1305,13 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       updateExportarSeleccionadosBtn(tipo);
     });
   });
+
+  if (tipo === 'utilizados') {
+    const checkSeleccionarVarios = document.getElementById('check-seleccionar-varios-dias');
+    container.querySelectorAll('.registro-fecha-checkbox-wrap').forEach(wrap => {
+      wrap.classList.toggle('hidden', !checkSeleccionarVarios?.checked);
+    });
+  }
 
   container.querySelectorAll('.registro-utilizado-row').forEach(row => {
     row.addEventListener('click', (e) => {
@@ -1635,7 +1641,8 @@ function filterUtilizadosPorBusqueda(items, searchTerm) {
 function renderUtilizadosView() {
   const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
   const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
-  renderRegistrosPorFecha('utilizados-list', filtered, 'utilizados', 'Recambios Utilizados');
+  const expandAll = searchTerm.length > 0;
+  renderRegistrosPorFecha('utilizados-list', filtered, 'utilizados', 'Recambios Utilizados', expandAll);
   updateExportarSeleccionadosBtn('utilizados');
 }
 
@@ -1995,6 +2002,19 @@ async function init() {
     });
   }
   document.getElementById('btn-borrar-utilizados-seleccionados')?.addEventListener('click', borrarUtilizadosSeleccionados);
+
+  const checkSeleccionarVarios = document.getElementById('check-seleccionar-varios-dias');
+  if (checkSeleccionarVarios) {
+    checkSeleccionarVarios.addEventListener('change', () => {
+      const wraps = document.querySelectorAll('#utilizados-list .registro-fecha-checkbox-wrap');
+      wraps.forEach(wrap => wrap.classList.toggle('hidden', !checkSeleccionarVarios.checked));
+      if (!checkSeleccionarVarios.checked) {
+        document.querySelectorAll('#utilizados-list .registro-fecha-checkbox:checked').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('#utilizados-list .registro-fecha-checkbox-pendientes:checked').forEach(cb => { cb.checked = false; });
+        updateExportarSeleccionadosBtn('utilizados');
+      }
+    });
+  }
 
   const filterUtilizados = document.getElementById('filter-utilizados');
   if (filterUtilizados) {
