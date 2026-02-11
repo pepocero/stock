@@ -1,0 +1,1 @@
+This folder contains the built output assets for the worker "stock-backup" generated at 2026-02-11T22:10:08.586Z.

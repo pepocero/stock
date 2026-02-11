@@ -26,7 +26,11 @@
     "db:migrate:010:remote": "wrangler d1 execute stock-db --remote --file=./migrations/010_utilizados_add_fecharecup.sql",
     "db:migrate:011": "wrangler d1 execute stock-db --local --file=./migrations/011_billeteros.sql",
     "db:migrate:011:remote": "wrangler d1 execute stock-db --remote --file=./migrations/011_billeteros.sql",
-    "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote && npm run db:migrate:011:remote"
+    "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote && npm run db:migrate:011:remote",
+    "backup:bucket:create": "wrangler r2 bucket create stock-backups",
+    "backup:deploy": "wrangler deploy -c workers/backup/wrangler.toml",
+    "backup:secret": "wrangler secret put D1_REST_API_TOKEN -c workers/backup/wrangler.toml",
+    "backup:trigger": "node workers/backup/trigger.js"
   },
   "devDependencies": {
     "wrangler": "^4.63.0"

@@ -1,0 +1,26 @@
+name = "stock-backup"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ID de la base D1 stock-db
+# account_id se obtiene con: wrangler whoami
+[vars]
+ACCOUNT_ID = "57c6750913a2c0db6a279da9658d402a"  # wrangler whoami muestra el ID
+DATABASE_ID = "a4662b08-e159-473b-9e87-e92cd77d3bca"
+
+# D1_REST_API_TOKEN: secreto. Añadir con: wrangler secret put D1_REST_API_TOKEN
+# Crear token en: Cloudflare Dashboard → My Profile → API Tokens
+# Permisos: Account - D1 - Edit
+
+[[workflows]]
+name = "backup-workflow"
+binding = "BACKUP_WORKFLOW"
+class_name = "BackupWorkflow"
+
+[[r2_buckets]]
+binding = "BACKUP_BUCKET"
+bucket_name = "stock-backups"
+
+[triggers]
+crons = ["0 0 * * *"]
