@@ -41,7 +41,7 @@ export async function listUtilizados(db, filters = {}) {
     params.push(filters.fechaDesde);
   }
   if (filters.fechaHasta) {
-    query += ' AND fecha <= ?';
+    query += ' AND u.fecha <= ?';
     params.push(filters.fechaHasta);
   }
 

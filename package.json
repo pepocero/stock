@@ -24,7 +24,9 @@
     "db:migrate:009:remote": "wrangler d1 execute stock-db --remote --file=./migrations/009_recuperados_add_nombre_utilizado_id.sql",
     "db:migrate:010": "wrangler d1 execute stock-db --local --file=./migrations/010_utilizados_add_fecharecup.sql",
     "db:migrate:010:remote": "wrangler d1 execute stock-db --remote --file=./migrations/010_utilizados_add_fecharecup.sql",
-    "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote"
+    "db:migrate:011": "wrangler d1 execute stock-db --local --file=./migrations/011_billeteros.sql",
+    "db:migrate:011:remote": "wrangler d1 execute stock-db --remote --file=./migrations/011_billeteros.sql",
+    "db:migrate:all:remote": "npm run db:migrate:004:remote && npm run db:migrate:005:remote && npm run db:migrate:006:remote && npm run db:migrate:007:remote && npm run db:migrate:008:remote && npm run db:migrate:009:remote && npm run db:migrate:010:remote && npm run db:migrate:011:remote"
   },
   "devDependencies": {
     "wrangler": "^4.63.0"

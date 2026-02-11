@@ -40,6 +40,7 @@
         <button class="tab sidebar-link" data-view="fabricantes">Fabricantes</button>
         <button class="tab sidebar-link" data-view="utilizados">Recambios Utilizados</button>
         <button class="tab sidebar-link" data-view="pendientes">Pendientes</button>
+        <button class="tab sidebar-link" data-view="billeteros">Billeteros</button>
       </nav>
       <div class="sidebar-footer">
         <button type="button" id="btn-instalar-app" class="btn btn-primary sidebar-install hidden">
@@ -171,6 +172,110 @@
             <input type="text" id="nuevo-fabricante-nombre" placeholder="Nombre del fabricante (ej: Azkoyen, Jofemar)">
             <button type="button" id="btn-add-fabricante" class="btn btn-primary">Añadir fabricante</button>
           </div>
+        </div>
+      </section>
+
+      <!-- Vista: Billeteros -->
+      <section id="view-billeteros" class="view">
+        <div class="registros-section">
+          <div class="billeteros-form-wrap">
+            <h3 class="subsection-title">Nuevo registro</h3>
+            <form id="form-billetero" class="form-billetero">
+              <div class="form-grid form-grid-billetero">
+                <div class="field">
+                  <label for="billetero-fecha">Fecha *</label>
+                  <input type="date" id="billetero-fecha" required>
+                </div>
+                <div class="field field-wide">
+                  <label for="billetero-bar">Bar</label>
+                  <textarea id="billetero-bar" rows="2" placeholder="Nombre del bar y/o dirección"></textarea>
+                </div>
+                <div class="field">
+                  <label for="billetero-retirado">Billetero Retirado</label>
+                  <select id="billetero-retirado">
+                    <option value="">--</option>
+                    <option value="Lithos">Lithos</option>
+                    <option value="NV9">NV9</option>
+                    <option value="BT11">BT11</option>
+                    <option value="BT10">BT10</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="billetero-serie-retirado">Serie Retirado</label>
+                  <input type="text" id="billetero-serie-retirado" placeholder="Alfanumérico">
+                </div>
+                <div class="field">
+                  <label for="billetero-suplente">Billetero Suplente</label>
+                  <select id="billetero-suplente">
+                    <option value="">--</option>
+                    <option value="Lithos">Lithos</option>
+                    <option value="NV9">NV9</option>
+                    <option value="BT11">BT11</option>
+                    <option value="BT10">BT10</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="billetero-serie-suplente">Serie Suplente</label>
+                  <input type="text" id="billetero-serie-suplente" placeholder="Alfanumérico">
+                </div>
+                <div class="field">
+                  <label for="billetero-recuperado">Recuperado</label>
+                  <select id="billetero-recuperado">
+                    <option value="">--</option>
+                    <option value="si">Sí</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="billetero-pendiente">Pendiente</label>
+                  <select id="billetero-pendiente">
+                    <option value="">--</option>
+                    <option value="si">Sí</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="billetero-otro">Otro Billetero</label>
+                  <select id="billetero-otro">
+                    <option value="">--</option>
+                    <option value="Lithos">Lithos</option>
+                    <option value="NV9">NV9</option>
+                    <option value="BT11">BT11</option>
+                    <option value="BT10">BT10</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="billetero-serie-otro">Serie Otro</label>
+                  <input type="text" id="billetero-serie-otro" placeholder="Alfanumérico">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+              </div>
+            </form>
+          </div>
+          <div class="pendientes-filters billeteros-filters">
+            <div class="filters-row">
+              <label for="billeteros-fecha">Fecha exacta</label>
+              <input type="date" id="billeteros-fecha" class="input-fecha">
+            </div>
+            <div class="filters-row">
+              <label for="billeteros-fecha-desde">Desde</label>
+              <input type="date" id="billeteros-fecha-desde" class="input-fecha">
+            </div>
+            <div class="filters-row">
+              <label for="billeteros-fecha-hasta">Hasta</label>
+              <input type="date" id="billeteros-fecha-hasta" class="input-fecha">
+            </div>
+            <button type="button" id="btn-billeteros-buscar" class="btn btn-primary btn-sm">Buscar</button>
+            <button type="button" id="btn-billeteros-limpiar" class="btn btn-secondary btn-sm">Limpiar</button>
+          </div>
+          <div class="registros-toolbar">
+            <div class="exportar-dropdown-wrapper">
+              <button type="button" id="btn-exportar-billeteros" class="btn btn-primary btn-sm hidden">Exportar</button>
+            </div>
+          </div>
+          <div id="billeteros-list" class="billeteros-list"></div>
         </div>
       </section>
 

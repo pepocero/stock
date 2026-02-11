@@ -19,9 +19,9 @@ export async function listRecambios(db, { fabricante, search, sortBy, sortOrder,
   }
 
   if (search && search.trim()) {
-    const searchTerm = `%${search.trim()}%`;
+    const searchTerm = `%${search.trim().toLowerCase()}%`;
     query += ` AND (
-      codigo LIKE ? OR nombre LIKE ? OR fabricante LIKE ? OR alias LIKE ?
+      LOWER(codigo) LIKE ? OR LOWER(nombre) LIKE ? OR LOWER(fabricante) LIKE ? OR LOWER(alias) LIKE ?
     )`;
     params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }

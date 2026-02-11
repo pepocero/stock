@@ -5,12 +5,13 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.07';
+const APP_VERSION = '1.1.10';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
 let utilizadosData = [];
 let pendientesData = [];
+let billeterosData = [];
 let recuperadosData = [];
 let deferredInstallPrompt = null;
 let backHandler = null;
@@ -251,6 +252,7 @@ const VIEW_TITLES = {
   fabricantes: 'Fabricantes',
   utilizados: 'Recambios Utilizados',
   pendientes: 'Pendientes',
+  billeteros: 'Billeteros',
   campos: 'Campos adicionales'
 };
 
@@ -1113,6 +1115,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
         <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
         <td>${escapeHtml(r.codigo)}</td>
         <td>${escapeHtml(r.nombre || '')}</td>
+        ${tipo === 'utilizados' ? `<td>${escapeHtml(r.alias || '')}</td>` : ''}
         <td>${r.cantidad}</td>
         <td onclick="event.stopPropagation()">
           <select class="select-recuperado" data-id="${r.id}" title="Estado de recuperación">
@@ -1125,14 +1128,17 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
       </tr>
     `;
     }).join('');
-    const thead = '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>';
+    const thead = tipo === 'utilizados'
+      ? '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Alias</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>'
+      : '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>';
     return `
       <div class="registro-fecha-group" data-fecha="${fecha}">
         <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
           <span class="registro-fecha-toggle">▶</span>
           <span class="registro-fecha-label">${escapeHtml(fechaLabel)}</span>
-          <span class="registro-fecha-count">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
           <div class="registro-fecha-actions">
+            ${tipo === 'utilizados' ? `<span class="registro-check-label">Pendientes</span><input type="checkbox" class="registro-fecha-checkbox-pendientes" data-fecha="${fecha}" data-tipo="${tipo}" data-solo-pendientes="true" onclick="event.stopPropagation()" title="Solo pendientes">` : ''}
+            <span class="registro-fecha-count registro-check-label">(${registros.length} registro${registros.length !== 1 ? 's' : ''})</span>
             <input type="checkbox" class="registro-fecha-checkbox" data-fecha="${fecha}" data-tipo="${tipo}" onclick="event.stopPropagation()">
             <div class="exportar-dropdown-wrapper">
               <button type="button" class="btn btn-sm btn-secondary btn-exportar-fecha" data-fecha="${fecha}" data-tipo="${tipo}">Exportar</button>
@@ -1182,7 +1188,22 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo) {
   });
 
   container.querySelectorAll('.registro-fecha-checkbox').forEach(cb => {
-    cb.addEventListener('change', () => updateExportarSeleccionadosBtn(tipo));
+    cb.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        const pendientes = e.target.closest('.registro-fecha-actions')?.querySelector('.registro-fecha-checkbox-pendientes');
+        if (pendientes?.checked) pendientes.checked = false;
+      }
+      updateExportarSeleccionadosBtn(tipo);
+    });
+  });
+  container.querySelectorAll('.registro-fecha-checkbox-pendientes').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        const other = e.target.closest('.registro-fecha-actions')?.querySelector('.registro-fecha-checkbox');
+        if (other?.checked) other.checked = false;
+      }
+      updateExportarSeleccionadosBtn(tipo);
+    });
   });
 
   container.querySelectorAll('.registro-utilizado-row').forEach(row => {
@@ -1315,24 +1336,27 @@ function removeUtilizadoRowFromDOM(id) {
 }
 
 function updateExportarSeleccionadosBtn(tipo) {
-  const checked = document.querySelectorAll(`.registro-fecha-checkbox[data-tipo="${tipo}"]:checked`);
-  const visible = checked.length > 0;
+  const checkedAll = document.querySelectorAll(`.registro-fecha-checkbox[data-tipo="${tipo}"]:checked`);
+  const checkedPendientes = document.querySelectorAll(`.registro-fecha-checkbox-pendientes[data-tipo="${tipo}"]:checked`);
+  const visibleExport = checkedAll.length > 0 || checkedPendientes.length > 0;
+  const visibleBorrar = checkedAll.length > 0;
   const btnExportar = document.getElementById(`btn-exportar-${tipo}-seleccionados`);
   const btnBorrar = document.getElementById(`btn-borrar-${tipo}-seleccionados`);
   const wrapperExportar = btnExportar?.closest('.exportar-dropdown-wrapper');
   if (wrapperExportar || btnExportar) {
     const el = wrapperExportar || btnExportar;
-    if (visible) {
+    if (visibleExport) {
       el.classList.remove('hidden');
-      if (btnExportar) btnExportar.textContent = `Exportar seleccionados (${checked.length})`;
+      const total = checkedAll.length + checkedPendientes.length;
+      if (btnExportar) btnExportar.textContent = `Exportar seleccionados (${total})`;
     } else {
       el.classList.add('hidden');
     }
   }
   if (btnBorrar) {
-    if (visible) {
+    if (visibleBorrar) {
       btnBorrar.classList.remove('hidden');
-      btnBorrar.textContent = `Borrar seleccionados (${checked.length})`;
+      btnBorrar.textContent = `Borrar seleccionados (${checkedAll.length})`;
     } else {
       btnBorrar.classList.add('hidden');
     }
@@ -1355,16 +1379,32 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
   const border = isDark ? '#3d424d' : '#ccc';
   const borderHeader = isDark ? '#3d424d' : '#333';
 
-  const headers = ['Fecha', 'Código', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
-  const rows = items.map(i => [
-    formatDateDDMMYYYY(i.fecha),
-    i.codigo,
-    i.nombre || '',
-    i.alias || '',
-    i.cantidad,
-    i.recuperado || 'Pendiente',
-    i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
-  ]);
+  const isBilleteros = tipo === 'billeteros';
+  const headers = isBilleteros
+    ? ['Fecha', 'Bar', 'Billetero Retirado', 'Serie Retirado', 'Billetero Suplente', 'Serie Suplente', 'Recuperado', 'Pendiente', 'Otro Billetero', 'Serie Otro']
+    : ['Fecha', 'Código', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
+  const rows = isBilleteros
+    ? items.map(i => [
+        formatDateDDMMYYYY(i.fecha),
+        i.bar || '',
+        i.billetero_retirado || '',
+        i.serie_retirado || '',
+        i.billetero_suplente || '',
+        i.serie_suplente || '',
+        i.recuperado || '',
+        i.pendiente || '',
+        i.otro_billetero || '',
+        i.serie_otro || ''
+      ])
+    : items.map(i => [
+        formatDateDDMMYYYY(i.fecha),
+        i.codigo,
+        i.nombre || '',
+        i.alias || '',
+        i.cantidad,
+        i.recuperado || 'Pendiente',
+        i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
+      ]);
   const tableHtml = `
     <div class="exportar-imagen-temp" style="position:fixed;left:-9999px;top:0;background:${bg};color:${text};padding:1rem;font-family:sans-serif;font-size:14px;border-collapse:collapse;">
       <h3 style="margin:0 0 1rem;font-size:1.1rem;color:${text};">${escapeHtml(titulo)}</h3>
@@ -1447,10 +1487,29 @@ function exportarRegistrosExcel(titulo, items, tipo = '') {
     return;
   }
   const isUtilizados = tipo === 'utilizados';
-  const headers = isUtilizados ? ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'] : ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad'];
-  const rows = isUtilizados
-    ? items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''])
-    : items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad]);
+  const isBilleteros = tipo === 'billeteros';
+  let headers, rows;
+  if (isBilleteros) {
+    headers = ['Fecha', 'Bar', 'Billetero Retirado', 'Serie Retirado', 'Billetero Suplente', 'Serie Suplente', 'Recuperado', 'Pendiente', 'Otro Billetero', 'Serie Otro'];
+    rows = items.map(i => [
+      formatDateDDMMYYYY(i.fecha),
+      i.bar || '',
+      i.billetero_retirado || '',
+      i.serie_retirado || '',
+      i.billetero_suplente || '',
+      i.serie_suplente || '',
+      i.recuperado || '',
+      i.pendiente || '',
+      i.otro_billetero || '',
+      i.serie_otro || ''
+    ]);
+  } else if (isUtilizados) {
+    headers = ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
+    rows = items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : '']);
+  } else {
+    headers = ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad'];
+    rows = items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad]);
+  }
   const data = [[titulo], headers, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -1532,6 +1591,152 @@ async function loadPendientesView() {
   } catch (err) {
     container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
     document.getElementById('btn-exportar-pendientes')?.classList.add('hidden');
+  }
+}
+
+function buildBilleterosUrl() {
+  const fecha = document.getElementById('billeteros-fecha')?.value?.trim();
+  const fechaDesde = document.getElementById('billeteros-fecha-desde')?.value?.trim();
+  const fechaHasta = document.getElementById('billeteros-fecha-hasta')?.value?.trim();
+  const params = new URLSearchParams();
+  if (fecha) params.set('fecha', fecha);
+  if (fechaDesde) params.set('fechaDesde', fechaDesde);
+  if (fechaHasta) params.set('fechaHasta', fechaHasta);
+  const qs = params.toString();
+  return `/billeteros${qs ? '?' + qs : ''}`;
+}
+
+const BILLETERO_RECUPERADO_OPTS = [{ v: '', l: '--' }, { v: 'si', l: 'Sí' }, { v: 'no', l: 'No' }];
+const BILLETERO_PENDIENTE_OPTS = [{ v: '', l: '--' }, { v: 'si', l: 'Sí' }, { v: 'no', l: 'No' }];
+
+function renderBilleterosView(items) {
+  const container = document.getElementById('billeteros-list');
+  if (!container) return;
+  const btnExportar = document.getElementById('btn-exportar-billeteros');
+  if (items.length === 0) {
+    container.innerHTML = '<p class="empty-state">No hay registros con los filtros seleccionados.</p>';
+    if (btnExportar) btnExportar.classList.add('hidden');
+    return;
+  }
+  const headers = ['Fecha', 'Bar', 'Billetero Retirado', 'Serie Retirado', 'Billetero Suplente', 'Serie Suplente', 'Recuperado', 'Pendiente', 'Otro Billetero', 'Serie Otro', ''];
+  const rows = items.map(b => {
+    const selRecup = `<select class="select-billetero" data-id="${b.id}" data-field="recuperado" data-value="${escapeHtml(b.recuperado || '')}">${BILLETERO_RECUPERADO_OPTS.map(o => `<option value="${o.v}" ${(b.recuperado || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('')}</select>`;
+    const selPend = `<select class="select-billetero" data-id="${b.id}" data-field="pendiente" data-value="${escapeHtml(b.pendiente || '')}">${BILLETERO_PENDIENTE_OPTS.map(o => `<option value="${o.v}" ${(b.pendiente || '') === o.v ? 'selected' : ''}>${escapeHtml(o.l)}</option>`).join('')}</select>`;
+    return `
+      <tr data-id="${b.id}">
+        <td>${escapeHtml(formatDateDDMMYYYY(b.fecha))}</td>
+        <td>${escapeHtml(b.bar || '')}</td>
+        <td>${escapeHtml(b.billetero_retirado || '')}</td>
+        <td>${escapeHtml(b.serie_retirado || '')}</td>
+        <td>${escapeHtml(b.billetero_suplente || '')}</td>
+        <td>${escapeHtml(b.serie_suplente || '')}</td>
+        <td class="cell-select">${selRecup}</td>
+        <td class="cell-select">${selPend}</td>
+        <td>${escapeHtml(b.otro_billetero || '')}</td>
+        <td>${escapeHtml(b.serie_otro || '')}</td>
+        <td class="cell-actions"><button type="button" class="btn-icon btn-trash" data-id="${b.id}" title="Eliminar">🗑</button></td>
+      </tr>
+    `;
+  }).join('');
+  container.innerHTML = `
+    <div class="table-container registro-table-wrap">
+      <table class="data-table registro-table billeteros-table">
+        <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  if (btnExportar) {
+    btnExportar.classList.remove('hidden');
+    btnExportar.textContent = `Exportar (${items.length})`;
+  }
+  container.querySelectorAll('.btn-trash').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id);
+      if (!confirm('¿Eliminar este registro de billeteros? Esta acción no se puede deshacer.')) return;
+      try {
+        await api(`/billeteros/${id}`, { method: 'DELETE' });
+        billeterosData = billeterosData.filter(b => b.id !== id);
+        renderBilleterosView(billeterosData);
+        showFeedback('Registro eliminado', 'success');
+      } catch (err) {
+        showFeedback(err.message || 'Error al eliminar', 'error');
+      }
+    });
+  });
+
+  container.querySelectorAll('.select-billetero').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const target = e.target;
+      const id = parseInt(target.dataset.id);
+      const field = target.dataset.field;
+      const prevValue = target.dataset.value ?? '';
+      const value = target.value;
+      try {
+        await api(`/billeteros/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
+        target.dataset.value = value;
+        const item = billeterosData.find(b => b.id === id);
+        if (item) item[field] = value;
+        showFeedback('Actualizado', 'success');
+      } catch (err) {
+        showFeedback(err.message || 'Error al actualizar', 'error');
+        target.value = prevValue;
+      }
+    });
+  });
+}
+
+async function loadBilleterosView() {
+  const container = document.getElementById('billeteros-list');
+  container.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    billeterosData = await api(buildBilleterosUrl());
+    renderBilleterosView(billeterosData);
+  } catch (err) {
+    container.innerHTML = `<p class="error-msg">${escapeHtml(err.message)}</p>`;
+    document.getElementById('btn-exportar-billeteros')?.classList.add('hidden');
+  }
+}
+
+async function submitBilletero(e) {
+  e.preventDefault();
+  const fecha = document.getElementById('billetero-fecha').value?.trim();
+  const bar = document.getElementById('billetero-bar').value?.trim();
+  const billetero_retirado = document.getElementById('billetero-retirado').value?.trim();
+  const serie_retirado = document.getElementById('billetero-serie-retirado').value?.trim();
+  const billetero_suplente = document.getElementById('billetero-suplente').value?.trim();
+  const serie_suplente = document.getElementById('billetero-serie-suplente').value?.trim();
+  const recuperado = document.getElementById('billetero-recuperado').value;
+  const pendiente = document.getElementById('billetero-pendiente').value;
+  const otro_billetero = document.getElementById('billetero-otro').value?.trim();
+  const serie_otro = document.getElementById('billetero-serie-otro').value?.trim();
+  if (!fecha) {
+    showFeedback('La fecha es obligatoria', 'error');
+    return;
+  }
+  try {
+    await api('/billeteros', {
+      method: 'POST',
+      body: JSON.stringify({
+        fecha,
+        bar: bar || null,
+        billetero_retirado: billetero_retirado || null,
+        serie_retirado: serie_retirado || null,
+        billetero_suplente: billetero_suplente || null,
+        serie_suplente: serie_suplente || null,
+        recuperado: recuperado || null,
+        pendiente: pendiente || null,
+        otro_billetero: otro_billetero || null,
+        serie_otro: serie_otro || null
+      })
+    });
+    showFeedback('Registro guardado', 'success');
+    document.getElementById('form-billetero').reset();
+    document.getElementById('billetero-fecha').value = new Date().toISOString().slice(0, 10);
+    loadBilleterosView();
+  } catch (err) {
+    showFeedback(err.message || 'Error al guardar', 'error');
   }
 }
 
@@ -1631,6 +1836,11 @@ async function init() {
       if (tab.dataset.view === 'fabricantes') loadFabricantesView();
       if (tab.dataset.view === 'utilizados') loadUtilizados();
       if (tab.dataset.view === 'pendientes') loadPendientesView();
+      if (tab.dataset.view === 'billeteros') {
+        const fechaInput = document.getElementById('billetero-fecha');
+        if (fechaInput && !fechaInput.value) fechaInput.value = new Date().toISOString().slice(0, 10);
+        loadBilleterosView();
+      }
     });
   });
 
@@ -1639,12 +1849,25 @@ async function init() {
     btnExportarSel.addEventListener('click', (e) => {
       e.stopPropagation();
       const getItems = () => {
-        const checked = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
-        const fechas = new Set(Array.from(checked).map(cb => cb.dataset.fecha));
-        if (!fechas.size) return [];
+        const checkedAll = document.querySelectorAll('.registro-fecha-checkbox[data-tipo="utilizados"]:checked');
+        const checkedPendientes = document.querySelectorAll('.registro-fecha-checkbox-pendientes[data-tipo="utilizados"]:checked');
         const searchTerm = document.getElementById('filter-utilizados')?.value?.trim() || '';
         const filtered = filterUtilizadosPorBusqueda(utilizadosData, searchTerm);
-        return filtered.filter(i => fechas.has(i.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
+        const seen = new Set();
+        const items = [];
+        for (const cb of checkedAll) {
+          const fecha = cb.dataset.fecha;
+          filtered.filter(i => i.fecha === fecha).forEach(i => {
+            if (!seen.has(i.id)) { seen.add(i.id); items.push(i); }
+          });
+        }
+        for (const cb of checkedPendientes) {
+          const fecha = cb.dataset.fecha;
+          filtered.filter(i => i.fecha === fecha && (i.recuperado || 'Pendiente') === 'Pendiente').forEach(i => {
+            if (!seen.has(i.id)) { seen.add(i.id); items.push(i); }
+          });
+        }
+        return items.sort((a, b) => a.fecha.localeCompare(b.fecha) || a.created_at?.localeCompare(b.created_at));
       };
       const items = getItems();
       if (!items.length) return;
@@ -1690,6 +1913,29 @@ async function init() {
         btnExportarPendientes,
         () => exportarRegistrosExcel('Recambios Pendientes', pendientesData, 'utilizados'),
         () => exportarRegistrosImagen('Recambios Pendientes', pendientesData, 'utilizados')
+      );
+    });
+  }
+
+  document.getElementById('form-billetero')?.addEventListener('submit', submitBilletero);
+  document.getElementById('btn-billeteros-buscar')?.addEventListener('click', loadBilleterosView);
+  document.getElementById('btn-billeteros-limpiar')?.addEventListener('click', () => {
+    document.getElementById('billeteros-fecha').value = '';
+    document.getElementById('billeteros-fecha-desde').value = '';
+    document.getElementById('billeteros-fecha-hasta').value = '';
+    billeterosData = [];
+    renderBilleterosView([]);
+    document.getElementById('btn-exportar-billeteros')?.classList.add('hidden');
+  });
+  const btnExportarBilleteros = document.getElementById('btn-exportar-billeteros');
+  if (btnExportarBilleteros) {
+    btnExportarBilleteros.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!billeterosData.length) return;
+      showExportarPortal(
+        btnExportarBilleteros,
+        () => exportarRegistrosExcel('Billeteros', billeterosData, 'billeteros'),
+        () => exportarRegistrosImagen('Billeteros', billeterosData, 'billeteros')
       );
     });
   }

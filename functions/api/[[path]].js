@@ -6,6 +6,7 @@
 
 import { handleRecambios, handleRecambiosImport, handleRecambiosBatchDelete, handleRecambioById, handleRecambioUtilizar, handleRecambioRecuperar } from '../../src/routes/recambios.js';
 import { handleUtilizados, handleUtilizadosBatchDelete, handleUtilizadoById } from '../../src/routes/utilizados.js';
+import { handleBilleteros, handleBilleteroById } from '../../src/routes/billeteros.js';
 import { handleCustomFields, handleCustomFieldById } from '../../src/routes/custom-fields.js';
 import { handleFabricantes, handleFabricanteById } from '../../src/routes/fabricantes.js';
 import { error, corsPreflight } from '../../src/utils/response.js';
@@ -63,6 +64,11 @@ export async function onRequest(context) {
       if (parts.length === 2 && parts[1] === 'batch-delete') return await handleUtilizadosBatchDelete(request, env);
       if (parts.length === 2) return await handleUtilizadoById(request, env, parts[1]);
       if (parts.length === 1) return await handleUtilizados(request, env);
+    }
+
+    if (parts[0] === 'billeteros') {
+      if (parts.length === 2) return await handleBilleteroById(request, env, parts[1]);
+      if (parts.length === 1) return await handleBilleteros(request, env);
     }
 
     return error('Ruta no encontrada', 404);

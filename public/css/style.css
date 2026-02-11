@@ -1035,7 +1035,8 @@ body {
 }
 
 .registros-filters,
-.pendientes-filters {
+.pendientes-filters,
+.billeteros-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -1043,18 +1044,21 @@ body {
   align-items: flex-end;
 }
 
-.pendientes-filters .filters-row {
+.pendientes-filters .filters-row,
+.billeteros-filters .filters-row {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.pendientes-filters .filters-row label {
+.pendientes-filters .filters-row label,
+.billeteros-filters .filters-row label {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
 
-.pendientes-filters .input-fecha {
+.pendientes-filters .input-fecha,
+.billeteros-filters .input-fecha {
   padding: 0.5rem 0.75rem;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -1064,9 +1068,76 @@ body {
   min-width: 140px;
 }
 
-.pendientes-filters .input-fecha:focus {
+.pendientes-filters .input-fecha:focus,
+.billeteros-filters .input-fecha:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.billeteros-form-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.subsection-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.form-grid-billetero {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-grid-billetero .field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-grid-billetero textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.form-grid-billetero textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.billeteros-table .cell-select .select-billetero {
+  min-width: 70px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.billeteros-table .cell-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.billeteros-table .btn-trash {
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.billeteros-table .btn-trash:hover {
+  color: var(--danger);
+  background: rgba(234, 67, 53, 0.15);
 }
 
 .registros-filters .filter-search {
@@ -1130,8 +1201,9 @@ body {
   flex: 1;
 }
 
-.registro-fecha-count {
-  font-size: 0.9rem;
+.registro-fecha-count,
+.registro-check-label {
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
 

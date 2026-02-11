@@ -65,6 +65,24 @@ CREATE TABLE IF NOT EXISTS recuperados (
 CREATE INDEX IF NOT EXISTS idx_recuperados_fecha ON recuperados(fecha);
 CREATE INDEX IF NOT EXISTS idx_recuperados_codigo ON recuperados(codigo);
 
+-- Tabla billeteros: registro de billeteros retirados/sustituidos
+CREATE TABLE IF NOT EXISTS billeteros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TEXT NOT NULL,
+    bar TEXT,
+    billetero_retirado TEXT,
+    serie_retirado TEXT,
+    billetero_suplente TEXT,
+    serie_suplente TEXT,
+    recuperado TEXT,
+    pendiente TEXT,
+    otro_billetero TEXT,
+    serie_otro TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_billeteros_fecha ON billeteros(fecha);
+
 -- =============================================================================
 -- CAMPOS PERSONALIZADOS (extensibilidad) - NO USADOS POR AHORA
 -- Descomentar si se necesitan en el futuro
