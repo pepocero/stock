@@ -5,7 +5,7 @@
 
 const API_BASE = '/api';
 const STOCK_BAJO_UMBRAL = 5;
-const APP_VERSION = '1.1.18';
+const APP_VERSION = '1.1.19';
 const VERSION_STORAGE_KEY = 'stock_app_version';
 
 let fabricantesList = [];
@@ -1146,13 +1146,23 @@ async function doImport() {
     showFeedback('No hay filas para importar', 'error');
     return;
   }
+  const replaceMode = document.querySelector('input[name="import-mode"]:checked')?.value === 'replace';
+  if (replaceMode && !confirm(
+    '¿Estás seguro? Se eliminarán TODOS los recambios de la base de datos y solo quedarán los del archivo importado. Esta acción no se puede deshacer.\n\n¿Continuar?'
+  )) {
+    return;
+  }
   const btn = document.getElementById('btn-importar');
   btn.disabled = true;
   try {
-    const result = await api('/recambios/import', { method: 'POST', body: { items } });
+    const result = await api('/recambios/import', { method: 'POST', body: { items, replace: replaceMode } });
     const resultEl = document.getElementById('import-result');
     resultEl.classList.remove('hidden');
-    let html = `<p><strong>Importación completada:</strong> ${result.created} creados, ${result.skipped} omitidos.</p>`;
+    let html = `<p><strong>Importación completada:</strong> ${result.created} creados, ${result.skipped} omitidos.`;
+    if (result.deleted > 0) {
+      html += ` ${result.deleted} recambios eliminados (modo sobrescribir).`;
+    }
+    html += '</p>';
     if (result.errors && result.errors.length > 0) {
       html += '<details><summary>Ver errores</summary><ul>';
       result.errors.slice(0, 20).forEach(e => {
@@ -1179,6 +1189,9 @@ function resetImport() {
   document.getElementById('import-filename').textContent = '';
   document.getElementById('import-mapping').classList.add('hidden');
   document.getElementById('import-result').classList.add('hidden');
+  const appendRadio = document.querySelector('input[name="import-mode"][value="append"]');
+  if (appendRadio) appendRadio.checked = true;
+  document.getElementById('import-replace-warning')?.classList.add('hidden');
 }
 
 // =============================================================================
@@ -2084,6 +2097,12 @@ async function init() {
   }
   document.getElementById('btn-importar')?.addEventListener('click', doImport);
   document.getElementById('btn-import-reset')?.addEventListener('click', resetImport);
+  document.querySelectorAll('input[name="import-mode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const warning = document.getElementById('import-replace-warning');
+      if (warning) warning.classList.toggle('hidden', radio.value !== 'replace');
+    });
+  });
 
   document.getElementById('btn-add-fabricante')?.addEventListener('click', addFabricante);
 

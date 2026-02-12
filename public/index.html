@@ -144,6 +144,20 @@
           <div id="import-mapping" class="import-mapping hidden">
             <h4>Asignar columnas</h4>
             <p class="import-mapping-hint">Indica qué columna del archivo corresponde a cada campo. Selecciona al menos un campo. Deja en blanco para no importar esa columna.</p>
+            <div class="import-mode-section">
+              <h4>Modo de importación</h4>
+              <label class="import-mode-option">
+                <input type="radio" name="import-mode" value="append" checked>
+                <span>Agregar a lo existente</span> — Los nuevos recambios se añaden sin perder los que ya hay. Si el código existe, se omite.
+              </label>
+              <label class="import-mode-option">
+                <input type="radio" name="import-mode" value="replace">
+                <span>Sobrescribir todo</span> — Se borran todos los recambios actuales y se importa solo el archivo. <strong class="import-warning">Se pierden todos los datos del catálogo.</strong>
+              </label>
+              <p id="import-replace-warning" class="import-replace-warning hidden">
+                <strong>Advertencia:</strong> Al importar en modo sobrescribir, se eliminarán todos los recambios de la base de datos. Esta acción no se puede deshacer. Los registros de utilizados y recuperados no se modifican, pero quedarán sin recambio asociado.
+              </p>
+            </div>
             <div id="import-mapping-fields" class="import-mapping-fields"></div>
             <div class="import-preview-section">
               <h4>Vista previa (primeras 5 filas)</h4>

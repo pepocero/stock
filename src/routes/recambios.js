@@ -180,7 +180,8 @@ export async function handleRecambiosImport(request, env) {
     return error('Máximo 500 recambios por importación');
   }
 
-  const result = await recambiosService.importarRecambios(env.DB, items);
+  const replace = body.replace === true;
+  const result = await recambiosService.importarRecambios(env.DB, items, { replace });
   return json(result);
 }
 

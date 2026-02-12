@@ -164,9 +164,15 @@ function normalizarFabricante(val, fabricantesNombres) {
   return fabricantesNombres.find(n => n === 'No Asignado') || fabricantesNombres[0] || 'No Asignado';
 }
 
-export async function importarRecambios(db, items) {
-  const results = { created: 0, skipped: 0, errors: [] };
+export async function importarRecambios(db, items, options = {}) {
+  const { replace = false } = options;
+  const results = { created: 0, skipped: 0, errors: [], deleted: 0 };
   const batchId = Date.now();
+
+  if (replace) {
+    results.deleted = await recambiosDb.deleteAllRecambios(db);
+  }
+
   const fabricantes = await fabricantesDb.listFabricantes(db);
   const fabricantesNombres = fabricantes.map(f => f.nombre);
 

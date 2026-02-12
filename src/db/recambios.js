@@ -109,6 +109,14 @@ export async function deleteRecambio(db, id) {
 }
 
 /**
+ * Elimina todos los recambios (para importación en modo reemplazo)
+ */
+export async function deleteAllRecambios(db) {
+  const result = await db.prepare('DELETE FROM recambios').run();
+  return result.meta.changes || 0;
+}
+
+/**
  * Elimina varios recambios por IDs
  */
 export async function deleteRecambiosBatch(db, ids) {
