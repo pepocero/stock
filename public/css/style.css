@@ -728,6 +728,8 @@ body {
 /* Modal detalle billetero editable */
 .modal-billetero-detalle-box {
   max-width: 480px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
 }
 
 .modal-billetero-form .modal-utilizado-item {
