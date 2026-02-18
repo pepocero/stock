@@ -81,7 +81,28 @@ export class BackupWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       await this.env.BACKUP_BUCKET.put(objectKey, dumpResponse.body);
 
-      return { saved: objectKey };
+      const toDelete: string[] = [];
+      let truncated = true;
+      let cursor: string | undefined;
+      while (truncated) {
+        const list = await this.env.BACKUP_BUCKET.list({
+          prefix: "backup-",
+          cursor,
+          limit: 1000,
+        });
+        for (const obj of list.objects) {
+          if (obj.key !== objectKey) toDelete.push(obj.key);
+        }
+        truncated = list.truncated;
+        cursor = list.cursor;
+      }
+      if (toDelete.length > 0) {
+        for (let i = 0; i < toDelete.length; i += 1000) {
+          await this.env.BACKUP_BUCKET.delete(toDelete.slice(i, i + 1000));
+        }
+      }
+
+      return { saved: objectKey, deleted: toDelete.length };
     });
   }
 }

@@ -153,7 +153,7 @@ wrangler workflows instances describe backup-workflow latest -c workers/backup/w
 | 5 | Desplegar el Worker | **Terminal** (`npm run backup:deploy`) |
 | 6 | Añadir secreto `D1_REST_API_TOKEN` | Web o terminal |
 
-**Funcionamiento:** Cron `0 0 * * *` (medianoche UTC). Archivos en R2: `backup-YYYY-MM-DD.sql`.
+**Funcionamiento:** Cron `0 0 * * *` (medianoche UTC). Archivos en R2: `backup-YYYY-MM-DD.sql`. Tras guardar cada backup correctamente, se eliminan los anteriores para mantener solo el último.
 
 ---
 
