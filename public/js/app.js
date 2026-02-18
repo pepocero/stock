@@ -1224,11 +1224,8 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo, expandAll = f
       const fecharecup = r.fecharecup ? formatDateDDMMYYYY(r.fecharecup) : '-';
       return `
       <tr class="registro-utilizado-row" data-id="${r.id}" tabindex="0" role="button">
-        <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
-        <td>${escapeHtml(r.codigo)}</td>
+        <td>${escapeHtml(r.alias || '')}</td>
         <td>${escapeHtml(r.nombre || '')}</td>
-        ${tipo === 'utilizados' ? `<td>${escapeHtml(r.alias || '')}</td>` : ''}
-        <td>${r.cantidad}</td>
         <td onclick="event.stopPropagation()">
           <select class="select-recuperado" data-id="${r.id}" title="Estado de recuperación">
             <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
@@ -1236,13 +1233,14 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo, expandAll = f
             <option value="Eliminar">Eliminar</option>
           </select>
         </td>
-        <td>${escapeHtml(fecharecup)}</td>
+        <td>${escapeHtml(r.codigo)}</td>
+        <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
+        <td>${r.cantidad}</td>
+        <td class="cell-fecharecup">${escapeHtml(fecharecup)}</td>
       </tr>
     `;
     }).join('');
-    const thead = tipo === 'utilizados'
-      ? '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Alias</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>'
-      : '<thead><tr><th>Fecha</th><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Recuperado</th><th>Fecha Recup.</th></tr></thead>';
+    const thead = '<thead><tr><th>Alias</th><th>Nombre</th><th>Recuperado</th><th>Código</th><th>Fecha</th><th>Cantidad</th><th>Fecha Recup.</th></tr></thead>';
     return `
       <div class="registro-fecha-group" data-fecha="${fecha}">
         <div class="registro-fecha-header" data-fecha="${fecha}" role="button" tabindex="0">
@@ -1375,7 +1373,7 @@ function renderRegistrosPorFecha(containerId, items, tipo, titulo, expandAll = f
         showFeedback(valor === 'Recuperado' ? 'Marcado como Recuperado' : 'Marcado como Pendiente', 'success');
         const row = container.querySelector(`tr[data-id="${id}"]`);
         if (row) {
-          const fecharecupCell = row.querySelector('td:last-child');
+          const fecharecupCell = row.querySelector('.cell-fecharecup');
           if (fecharecupCell) {
             fecharecupCell.textContent = item?.fecharecup ? formatDateDDMMYYYY(item.fecharecup) : '-';
           }
@@ -1502,7 +1500,7 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
   const isBilleteros = tipo === 'billeteros';
   const headers = isBilleteros
     ? ['Fecha', 'Bar', 'Billetero Retirado', 'Serie Retirado', 'Billetero Suplente', 'Serie Suplente', 'Recuperado', 'Pendiente', 'Otro Billetero', 'Serie Otro']
-    : ['Fecha', 'Código', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
+    : ['Alias', 'Nombre', 'Recuperado', 'Código', 'Fecha', 'Cantidad', 'Fecha Recup.'];
   const rows = isBilleteros
     ? items.map(i => [
         formatDateDDMMYYYY(i.fecha),
@@ -1517,12 +1515,12 @@ async function exportarRegistrosImagen(titulo, items, tipo = '') {
         i.serie_otro || ''
       ])
     : items.map(i => [
-        formatDateDDMMYYYY(i.fecha),
-        i.codigo,
-        i.nombre || '',
         i.alias || '',
-        i.cantidad,
+        i.nombre || '',
         i.recuperado || 'Pendiente',
+        i.codigo,
+        formatDateDDMMYYYY(i.fecha),
+        i.cantidad,
         i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : ''
       ]);
   const tableHtml = `
@@ -1624,11 +1622,11 @@ function exportarRegistrosExcel(titulo, items, tipo = '') {
       i.serie_otro || ''
     ]);
   } else if (isUtilizados) {
-    headers = ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad', 'Recuperado', 'Fecha Recup.'];
-    rows = items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad, i.recuperado || 'Pendiente', i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : '']);
+    headers = ['Alias', 'Nombre', 'Recuperado', 'Codigo', 'Fecha', 'Cantidad', 'Fecha Recup.'];
+    rows = items.map(i => [i.alias || '', i.nombre || '', i.recuperado || 'Pendiente', i.codigo, formatDateDDMMYYYY(i.fecha), i.cantidad, i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : '']);
   } else {
-    headers = ['Fecha', 'Codigo', 'Nombre', 'Alias', 'Cantidad'];
-    rows = items.map(i => [formatDateDDMMYYYY(i.fecha), i.codigo, i.nombre || '', i.alias || '', i.cantidad]);
+    headers = ['Alias', 'Nombre', 'Recuperado', 'Codigo', 'Fecha', 'Cantidad', 'Fecha Recup.'];
+    rows = items.map(i => [i.alias || '', i.nombre || '', i.recuperado || 'Pendiente', i.codigo, formatDateDDMMYYYY(i.fecha), i.cantidad, i.fecharecup ? formatDateDDMMYYYY(i.fecharecup) : '']);
   }
   const data = [[titulo], headers, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1680,15 +1678,28 @@ function renderPendientesView(items) {
     if (btnExportar) btnExportar.classList.add('hidden');
     return;
   }
-  const headers = ['Fecha', 'Código', 'Nombre', 'Cantidad'];
-  const rows = items.map(r => `
-    <tr>
-      <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
-      <td>${escapeHtml(r.codigo)}</td>
+  const headers = ['Alias', 'Nombre', 'Recuperado', 'Código', 'Fecha', 'Cantidad', 'Fecha Recup.'];
+  const rows = items.map(r => {
+    const recup = r.recuperado || 'Pendiente';
+    const fecharecup = r.fecharecup ? formatDateDDMMYYYY(r.fecharecup) : '-';
+    return `
+    <tr class="registro-utilizado-row" data-id="${r.id}" tabindex="0" role="button">
+      <td>${escapeHtml(r.alias || '')}</td>
       <td>${escapeHtml(r.nombre || '')}</td>
+      <td onclick="event.stopPropagation()">
+        <select class="select-recuperado select-recuperado-pendientes" data-id="${r.id}" title="Estado de recuperación">
+          <option value="Pendiente" ${recup === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+          <option value="Recuperado" ${recup === 'Recuperado' ? 'selected' : ''}>Recuperado</option>
+          <option value="Eliminar">Eliminar</option>
+        </select>
+      </td>
+      <td>${escapeHtml(r.codigo)}</td>
+      <td>${escapeHtml(formatDateDDMMYYYY(r.fecha))}</td>
       <td>${r.cantidad}</td>
+      <td class="cell-fecharecup">${escapeHtml(fecharecup)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   container.innerHTML = `
     <div class="table-container registro-table-wrap">
       <table class="data-table registro-table">
@@ -1701,6 +1712,54 @@ function renderPendientesView(items) {
     btnExportar.classList.remove('hidden');
     btnExportar.textContent = `Exportar (${items.length})`;
   }
+  container.querySelectorAll('.registro-utilizado-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.select-recuperado')) return;
+      const id = parseInt(row.dataset.id);
+      const item = items.find(i => i.id === id);
+      if (item) showModalUtilizadoDetalle(item);
+    });
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!e.target.closest('.select-recuperado')) row.click();
+      }
+    });
+  });
+  container.querySelectorAll('.select-recuperado-pendientes').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const id = parseInt(e.target.dataset.id);
+      const valor = e.target.value;
+      const prevVal = pendientesData.find(u => u.id === id)?.recuperado || 'Pendiente';
+      if (valor === 'Eliminar') {
+        if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) {
+          e.target.value = prevVal;
+          return;
+        }
+        try {
+          await api(`/utilizados/${id}`, { method: 'DELETE' });
+          pendientesData = pendientesData.filter(u => u.id !== id);
+          showFeedback('Registro eliminado', 'success');
+          renderPendientesView(pendientesData);
+        } catch (err) {
+          showFeedback(err.message, 'error');
+          e.target.value = prevVal;
+        }
+        return;
+      }
+      if (valor === 'Recuperado') {
+        try {
+          await api(`/utilizados/${id}`, { method: 'PATCH', body: { recuperado: valor } });
+          pendientesData = pendientesData.filter(u => u.id !== id);
+          showFeedback('Marcado como Recuperado', 'success');
+          renderPendientesView(pendientesData);
+        } catch (err) {
+          showFeedback(err.message, 'error');
+          e.target.value = prevVal;
+        }
+      }
+    });
+  });
 }
 
 async function loadPendientesView() {
